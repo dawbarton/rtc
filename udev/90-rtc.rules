@@ -1,0 +1,2 @@
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0123", ATTRS{idProduct}=="4567",SYMLINK+="rtc_messages", MODE="0660", GROUP="dialout"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0123", ATTRS{idProduct}=="4567", MODE="0660", GROUP="dialout"
