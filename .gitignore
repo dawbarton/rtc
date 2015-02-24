@@ -27,6 +27,7 @@
 
 # Binaries
 binary/*
+*.bin
 
 # Temporary files
 *.map
