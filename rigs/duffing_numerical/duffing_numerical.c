@@ -78,7 +78,7 @@
 #define N_FOURIER_MODES 7  /* N_FOURIER_MODES + 1 must be a multiple of 4 */
 #define N_FOURIER_COEFF (2*N_FOURIER_MODES + 2)  /* one will always be zero but it's easier/quicker than handling the special case */
 #define N_FOURIER_VEC (N_FOURIER_COEFF/4)
-#define N_FOURIER_AVE 10
+#define N_FOURIER_AVE 5
 
 #define INPUT_FILTER_ORDER 2
 #define INPUT_FILTER_N_STATE (2*INPUT_FILTER_ORDER)
