@@ -1,5 +1,5 @@
-classdef (ConstructOnLoad) rtc_interface < handle
-    %rtc_interface: Interface to the real-time control device. As far as
+classdef (ConstructOnLoad) rtc_interface < rtc_generic_interface
+    %RTC_INTERFACE Interface to the real-time control device. As far as
     %  possible this object is designed to be state-less. (The exception
     %  being the parameter list.)
 
@@ -170,11 +170,13 @@ classdef (ConstructOnLoad) rtc_interface < handle
             
             % Types that we might have to deal with
             type_sizes = containers.Map();
-            type_sizes('b') = 1; type_sizes('h') = 2; type_sizes('i') = 4; type_sizes('B') = 1; type_sizes('H') = 2; type_sizes('I') = 4; type_sizes('c') = 1; type_sizes('f') = 4;
+            type_sizes('b') = 1; type_sizes('h') = 2; type_sizes('i') = 4;
+            type_sizes('B') = 1; type_sizes('H') = 2; type_sizes('I') = 4; 
+            type_sizes('c') = 1; type_sizes('f') = 4;
             type_conv = containers.Map();
             type_conv('b') = 'int8'; type_conv('h') = 'int16'; type_conv('i') = 'int32';
             type_conv('B') = 'uint8'; type_conv('H') = 'uint16'; type_conv('I') = 'uint32';
-            type_conv('f') = 'single';
+            type_conv('f') = 'single'; type_conv('c') = 'char';
             % Get the parameter names
             obj.send_cmd(obj.CMD_GET_PAR_NAMES, []);
             names = char(obj.recv_cmd());
@@ -224,7 +226,13 @@ classdef (ConstructOnLoad) rtc_interface < handle
                     error('Incorrect number of values supplied for parameter %s', names{i});
                 end
                 value = cast(values{i}, par_type);
-                payload = horzcat(payload, typecast(par_id, 'uint8'), typecast(value, 'uint8')); %#ok<AGROW>
+                if strcmp(par_type, 'char')
+                    payload = horzcat(payload, typecast(par_id, 'uint8'), ...
+                                      cast(value, 'uint8')); %#ok<AGROW>
+                else
+                    payload = horzcat(payload, typecast(par_id, 'uint8'), ...
+                                      typecast(value, 'uint8')); %#ok<AGROW>
+                end
             end
             % Send the command
             obj.send_cmd(obj.CMD_SET_PAR_VALUE, payload);
@@ -261,7 +269,13 @@ classdef (ConstructOnLoad) rtc_interface < handle
             for i = 1:length(names)
                 par_type = obj.par_info(par_idxs(i)).type;
                 par_size = obj.par_info(par_idxs(i)).size;
-                data_list{i} = typecast(data(idx:idx + par_size - 1), par_type);
+                if strcmp(par_type, 'char')
+                    data_list{i} = cast(data(idx:idx + par_size - 1), ...
+                                        par_type);
+                else
+                    data_list{i} = typecast(data(idx:idx + par_size - 1), ...
+                                            par_type);
+                end
                 idx = idx + par_size;
             end
             % Return as a list or raw data depending on what was passed originally
