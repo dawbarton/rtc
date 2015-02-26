@@ -27,6 +27,8 @@ classdef ntmd_interface < rtc_interface
             obj.fourier.idx_cos = n_coeff/2 + 1 + (1:obj.fourier.n_modes);
             
             % Default options for the experiment
+            obj.opt.samples = 1000; % Number of samples to record
+            obj.opt.downsample = 0; % Number of samples to ignore for every sample recorded
             obj.opt.wait_time = 1; % Time (in secs) to wait for Fourier coefficients to settle
             obj.opt.max_waits = 10; % Maximum number of times to wait
             obj.opt.max_picard_iter = 5; % Maximum number of Picard iterations to do
