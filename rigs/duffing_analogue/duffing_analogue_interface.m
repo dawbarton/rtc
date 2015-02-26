@@ -35,8 +35,12 @@ classdef duffing_analogue_interface < rtc_interface
             
             % Data recording fields
             obj.datafields.stream_id = 1; % The stream to use for data recording
-            obj.datafields.static_fields = {'x_Kp', 'x_Kd', 'x_control', 'input_filter_freq', 'rand_filter_freq', 'sample_freq'};
-            obj.datafields.dynamic_fields = {'forcing_freq', 'forcing_coeffs', 'rand_ampl', 'x_coeffs_ave', 'x_coeffs_var', 'x_target_coeffs', 'out_coeffs_ave'};
+            obj.datafields.static_fields = {'x_Kp', 'x_Kd', 'x_control', ...
+                                'input_filter_freq', 'rand_filter_freq', ...
+                                'sample_freq', 'firmware'};
+            obj.datafields.dynamic_fields = {'forcing_freq', 'forcing_coeffs', ...
+                                'rand_ampl', 'x_coeffs_ave', 'x_coeffs_var', ...
+                                'x_target_coeffs', 'out_coeffs_ave'};
             obj.datafields.stream_fields = {'time_mod_2pi', 'x', 'x_target', 'out'};
 
             % Default control gains (that work!)
