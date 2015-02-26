@@ -1,4 +1,4 @@
-classdef (ConstructOnLoad) rtc_interface < rtc_generic_interface
+classdef (ConstructOnLoad) rtc_interface < handle
     %RTC_INTERFACE Interface to the real-time control device. As far as
     %  possible this object is designed to be state-less. (The exception
     %  being the parameter list.)
