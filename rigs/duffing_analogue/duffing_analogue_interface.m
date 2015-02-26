@@ -15,9 +15,9 @@ classdef duffing_analogue_interface < rtc_interface
             %DUFFING_ANALOGUE_INTERFACE  Construct an DUFFING_ANALOGUE_INTERFACE object.
             
             % Indices into the array of Fourier variables
-            n_coeff = length(rtc.par.x_coeffs);
+            n_coeff = length(obj.par.x_coeffs);
             obj.fourier.n_modes = n_coeff/2 - 1;
-            obj.fourier.n_ave = obj.par_info(rtc.par_idx('x_coeffs_arr')).count/n_coeff; % Number of periods that are averaged to get the result
+            obj.fourier.n_ave = obj.par_info(obj.par_idx('x_coeffs_arr')).count/n_coeff; % Number of periods that are averaged to get the result
             obj.fourier.idx_DC = n_coeff/2 + 1;
             obj.fourier.idx_AC = setdiff(2:n_coeff, obj.fourier.idx_DC);
             obj.fourier.idx_fund = [2, obj.fourier.idx_DC + 1];
