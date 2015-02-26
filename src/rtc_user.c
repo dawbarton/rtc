@@ -40,6 +40,11 @@
 
 #define OUTPUT_VOLTAGE 4.096f
 
+#ifndef FIRMWARE_VERSION
+#define FIRMWARE_VERSION "none"
+#endif
+
+static char firmware[] = FIRMWARE_VERSION;
 static unsigned int rtc_sample_freq;
 static volatile unsigned int rtc_clock_jitter;
 static volatile unsigned int rtc_user_overrun;
@@ -65,6 +70,7 @@ void rtc_user_init_handler(void)
 	char input_name[] = "I#volt";
 	int i;
 	ad760xDataHandler = rtc_user_main_handler;
+	rtc_data_add_par("firmware", &firmware, RTC_TYPE_CHAR, sizeof(firmware), rtc_data_trigger_read_only, NULL);
 	rtc_sample_freq = TIMER_FREQ;
 	rtc_data_add_par("sample_freq", &rtc_sample_freq, RTC_TYPE_UINT32, sizeof(unsigned int), rtc_data_trigger_read_only, NULL);
 	rtc_last_time = 0;

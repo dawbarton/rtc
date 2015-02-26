@@ -28,11 +28,15 @@ CFLAGS+=-ffast-math -fsingle-precision-constant -I$(APP_ROOT)include -std=gnu99 
 TARGET_MODE?=Release
 
 # Source files
-SRC=*.c $(APP_ROOT)/src/*.c
+SRC=$(wildcard *.c) $(APP_ROOT)/src/*.c
+INC=$(wildcard *.h) $(APP_ROOT)/include/*.h
+
+# Firmware version (use the last git commit id)
+FIRMWARE_VERSION=$(shell git rev-parse HEAD)
 
 # Build this package
-$(APP_NAME).bin: $(SRC)
-	$(CC) $(CFLAGS) $(SRC)
+$(APP_NAME).bin: $(SRC) $(INC)
+	$(CC) $(CFLAGS) -DFIRMWARE_VERSION="\"$(APP_NAME)_$(FIRMWARE_VERSION)\"" -DSAMPLE_FREQ=$(SAMPLE_FREQ) $(SRC)
 	@mkdir -p bin
 	@mv *.o* bin/
 	$(LD) $(LDFLAGS) $(LPATH) -o bin/$(APP_NAME).out -Map bin/$(APP_NAME).map bin/*.o* \

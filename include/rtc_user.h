@@ -38,7 +38,11 @@
 #define TIMER_100US                     (0x960)
 #define TIMER_1MS                       (0x5DC0)
 #define TIMER_OVERFLOW                  (0xFFFFFFFFu)
-#define TIMER_FREQ                      (1000)  /* Hz - make sure that TIMER_MASTER_FREQ/TIMER_FREQ is an integer */
+#ifndef SAMPLE_FREQ
+#define TIMER_FREQ                      (10000)  /* Hz - make sure that TIMER_MASTER_FREQ/TIMER_FREQ is an integer */
+#else
+#define TIMER_FREQ                      (SAMPLE_FREQ)  /* Hz - make sure that TIMER_MASTER_FREQ/TIMER_FREQ is an integer */
+#endif
 #define TIMER_PERIOD                    (TIMER_MASTER_FREQ/TIMER_FREQ)
 #define TIMER_PERIOD_FLOAT              (1.0f/TIMER_FREQ)
 #define TIMER_INITIAL_COUNT             (TIMER_OVERFLOW - TIMER_PERIOD)
