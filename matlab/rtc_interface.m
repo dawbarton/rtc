@@ -16,9 +16,6 @@ classdef (ConstructOnLoad) rtc_interface < handle
         STREAM_STATE_INACTIVE = 0;
         STREAM_STATE_ACTIVE   = 1;
         STREAM_STATE_FINISHED = 2;
-    end
-
-    properties
         dev;
         libusb_notfound;
         libusb_warnings;
@@ -28,59 +25,16 @@ classdef (ConstructOnLoad) rtc_interface < handle
         ep_out;
         par_info;
         par_idx;
-        par;
+    end
+
+    properties
+        par; % Parameters accessible to the user. 
+        opt; % Default options for the rig.
     end
     
-    methods
-        function obj = rtc_interface()
-            % function obj = rtc_interface()
-            %
-            % Construct an interface to the RTC device.
-            
-            % Load the library
-            if ~libisloaded('libusb')
-                [obj.libusb_notfound, obj.libusb_warnings] = loadlibrary('libusb','libusb.h');
-            end
-            calllib('libusb', 'libusb_init', libpointer);
-            obj.dev = calllib('libusb', 'libusb_open_device_with_vid_pid', libpointer, hex2dec('0123'), hex2dec('4567'));
-            if obj.dev.isNull()
-                error('Unable to open the RTC device');
-            else
-                fprintf('Connected to RTC device\n');
-            end
-            r = calllib('libusb','libusb_claim_interface', obj.dev, 0);
-            if r < 0
-                error('Failed to claim the RTC device');
-            end
-            
-            % Set the end points and interface of interest
-            obj.intf = 0;
-            obj.ep_out = 1;
-            obj.ep_in = 129;
-
-            % The timeout for any USB communications
-            obj.timeout = 5000;
-
-            % Get the parameter names
-            obj.get_par_list();
-
-            % A helper class for getting/setting parameters
-            obj.par = rtc_parameters(obj);
-            
-        end
-        
-        function delete(obj)
-            if ~obj.dev.isNull()
-                calllib('libusb', 'libusb_close', obj.dev);
-                fprintf('Released RTC device\n');
-            end
-            calllib('libusb', 'libusb_exit', libpointer);
-        end
-        
+    methods (Hidden)
         function send_raw(obj, data)
-            % function send_raw(data)
-            %
-            % Send raw data to the RTC device
+            % SEND_RAW  Send raw data to the RTC device (internal).
             transferred = libpointer('int32Ptr', 0);
             dataptr = libpointer('uint8Ptr', data);
             r = calllib('libusb','libusb_bulk_transfer', obj.dev, obj.ep_out, dataptr, length(data), transferred, obj.timeout);
@@ -93,9 +47,7 @@ classdef (ConstructOnLoad) rtc_interface < handle
         end
         
         function send_cmd(obj, cmd, data)
-            % function send_cmd(cmd, data)
-            %
-            % Send a command to the RTC device
+            % SEND_CMD  Send a command to the RTC device (internal).
             cmd = typecast(uint16(cmd), 'uint8');
             datalen = typecast(uint32(length(data)), 'uint8');
             if isempty(data)
@@ -109,9 +61,7 @@ classdef (ConstructOnLoad) rtc_interface < handle
         end
         
         function output = recv_raw(obj, nbytes)
-            % function recv_raw(nbytes)
-            %
-            % Read raw data from the RTC device
+            % RECV_RAW  Receive raw data from the RTC device (internal).
             if mod(nbytes, obj.MAX_PACKET_SIZE)
                 warning('rtc_interface:recv_raw', 'recv_raw should be used with a multiple of MAX_PACKET_SIZE bytes to avoid potential data corruption');
             end
@@ -129,9 +79,7 @@ classdef (ConstructOnLoad) rtc_interface < handle
         end
         
         function output = recv_cmd(obj)
-            % function recv_cmd()
-            %
-            % Read the return value from a command from the RTC device
+            % RECV_CMD  Receive the results of a command from the RTC device (internal).
             data = obj.recv_raw(obj.MAX_PACKET_SIZE);
             if length(data) < 4
                 error('No intelligible response from RTC device');
@@ -164,9 +112,7 @@ classdef (ConstructOnLoad) rtc_interface < handle
         end
         
         function get_par_list(obj)
-            % function get_par_list()
-            %
-            % Get the parameters available to access on the RTC device
+            % GET_PAR_LIST Get the parameters available to access on the RTC device (internal).
             
             % Types that we might have to deal with
             type_sizes = containers.Map();
@@ -205,11 +151,63 @@ classdef (ConstructOnLoad) rtc_interface < handle
                 obj.par_idx(obj.par_info(i).name) = i;
             end
         end
+    end
+    
+    methods
+        function obj = rtc_interface()
+            %RTC_INTERFACE Interface to the real-time control device. As far as
+            %  possible this object is designed to be state-less. (The exception
+            %  being the parameter list.)
+            
+            % Load the library
+            if ~libisloaded('libusb')
+                [obj.libusb_notfound, obj.libusb_warnings] = loadlibrary('libusb','libusb.h');
+            end
+            calllib('libusb', 'libusb_init', libpointer);
+            obj.dev = calllib('libusb', 'libusb_open_device_with_vid_pid', libpointer, hex2dec('0123'), hex2dec('4567'));
+            if obj.dev.isNull()
+                error('Unable to open the RTC device');
+            else
+                fprintf('Connected to RTC device\n');
+            end
+            r = calllib('libusb','libusb_claim_interface', obj.dev, 0);
+            if r < 0
+                error('Failed to claim the RTC device');
+            end
+            
+            % Set the end points and interface of interest
+            obj.intf = 0;
+            obj.ep_out = 1;
+            obj.ep_in = 129;
+
+            % The timeout for any USB communications
+            obj.timeout = 5000;
+
+            % Get the parameter names
+            obj.get_par_list();
+
+            % A helper class for getting/setting parameters
+            obj.par = rtc_parameters(obj);
+            
+            % Set the underlying device name
+            obj.opt.device = 'BBB-RTC';
+        end
+        
+        function delete(obj)
+            % DELETE  Destroy the interface to the real-time controller.
+            if ~obj.dev.isNull()
+                calllib('libusb', 'libusb_close', obj.dev);
+                fprintf('Released RTC device\n');
+            end
+            calllib('libusb', 'libusb_exit', libpointer);
+        end
         
         function set_par(obj, names, values)
-            % function set_par(names, values)
+            % SET_PAR  Set the values of the specified parameters.
             %
-            % Set the values of particular parameters on the RTC device
+            % OBJ.SET_PAR(NAME, VALUE) sets the value of the parameter NAME to VALUE.
+            % Both NAME and VALUE can be cell arrays in the case of setting multiple
+            % parameter values simultaneously.
 
             if ~iscell(names)
                 names = {names};
@@ -243,9 +241,10 @@ classdef (ConstructOnLoad) rtc_interface < handle
         end
         
         function values = get_par(obj, names)
-            % function get_par(names)
+            % GET_PAR  Get the values of the specified parameters.
             %
-            % Get the values of particular parameters from the RTC device
+            % OBJ.GET_PAR(NAME) gets the value of the parameter NAME. NAME can be a
+            % cell array to get multiple parameter values simultaneously.
             
             if ~iscell(names)
                 names = {names};
@@ -275,6 +274,9 @@ classdef (ConstructOnLoad) rtc_interface < handle
                 else
                     data_list{i} = typecast(data(idx:idx + par_size - 1), ...
                                             par_type);
+                    if strcmp(par_type, 'single')
+                        data_list{i} = cast(data_list{i}, 'double');
+                    end
                 end
                 idx = idx + par_size;
             end
@@ -287,9 +289,20 @@ classdef (ConstructOnLoad) rtc_interface < handle
         end
         
         function set_stream(obj, stream, parameters, samples, downsample)
-            % function set_stream(stream, parameters, samples, downsample)
+            % SET_STREAM  Set stream recording properties.
             %
-            % Set stream parameters, sample count and downsample rate
+            % OBJ.SET_STREAM(ID, NAMES, SAMPLES, DOWNSAMPLE) sets the stream with
+            % identifier ID (where multiple streams are available) to record the
+            % parameters given by the cell array NAMES. SAMPLES data points are
+            % recorded and DOWNSAMPLE data points are discarded between each recorded
+            % sample.
+            %
+            % Example
+            %
+            %   rtc.set_stream(0, {'x', 'out'}, 1000, 0);
+            %
+            % will set stream id 0 to record the parameters x and out. 1000 samples
+            % will be returned with no data discarded.
             
             stream_name = sprintf('S%d', stream);
             if exist('samples', 'var') && ~isempty(samples)
@@ -320,10 +333,16 @@ classdef (ConstructOnLoad) rtc_interface < handle
             end
         end
         
-        function [data, data_struct] = get_stream(obj, stream)
-            % function get_stream(stream)
+        function data = get_stream(obj, stream, return_struct)
+            % GET_STREAM  Get the data from a particular stream.
             %
-            % Get stream data from a finished stream
+            % OBJ.GET_STREAM(ID) returns an array of data recorded in the stream given
+            % by ID. If the stream is not ready, no data is returned.
+            %
+            % OBJ.GET_STREAM(ID, true) returns a structure with named fields containing
+            % the data recorded in the stream given by ID.
+            %
+            % See also START_STREAM.
             stream_name = sprintf('S%d', stream);
             if obj.get_par([stream_name 'state']) ~= obj.STREAM_STATE_FINISHED
                 data = [];
@@ -335,19 +354,31 @@ classdef (ConstructOnLoad) rtc_interface < handle
             obj.send_cmd(obj.CMD_GET_STREAM, typecast(uint32(stream), 'uint8'));
             raw_data = typecast(obj.recv_cmd(), 'uint32');
             raw_data = reshape(raw_data, [par_count, length(raw_data)/par_count]);
-            data = zeros(size(raw_data));
-            for i = 1:par_count
-                par_type = obj.par_info(par_ids(i) + 1).type;
-                par_name = obj.par_info(par_ids(i) + 1).name;
-                data_struct.(par_name) = typecast(raw_data(i, :), par_type);
-                data(i, :) = cast(data_struct.(par_name), 'double');
+            if exist('return_struct', 'var') && return_struct
+                for i = 1:par_count
+                    par_type = obj.par_info(par_ids(i) + 1).type;
+                    par_name = obj.par_info(par_ids(i) + 1).name;
+                    data.(par_name) = typecast(raw_data(i, :), par_type);
+                    if strcmp(par_type, 'single')
+                        data.(par_name) = cast(data.(par_name), 'double');
+                    end
+                end
+            else
+                data = zeros(size(raw_data));
+                for i = 1:par_count
+                    par_type = obj.par_info(par_ids(i) + 1).type;
+                    data(i, :) = cast(typecast(raw_data(i, :), par_type), 'double');
+                end
             end
         end
         
         function result = start_stream(obj, stream)
-            % function start_stream(stream)
+            % START_STREAM  Start a stream recording.
             %
-            % Start a stream recording data
+            % OBJ.START_STREAM(ID) starts the stream given by ID recording data with
+            % the current parameters from SET_STREAM.
+            %
+            % See also SET_STREAM.
             stream_name = sprintf('S%d', stream);
             obj.set_par([stream_name 'state'], obj.STREAM_STATE_ACTIVE);
             if obj.get_par([stream_name 'state']) ~= obj.STREAM_STATE_INACTIVE
@@ -357,25 +388,46 @@ classdef (ConstructOnLoad) rtc_interface < handle
             end
         end
         
-        function [data, data_struct] = run_stream(obj, stream, start, wait_period)
-            % function run_stream(stream, start, wait_period)
+        function data = run_stream(obj, stream, varargin)
+            % RUN_STREAM  Start a stream recording and then return the captured data.
             %
-            % Start a stream recording data and return the resulting data
+            % OBJ.RUN_STREAM(ID) starts the stream given by ID and then returns the
+            % captured data.
+            %
+            % OBJ.RUN_STREAM(ID, Name, Value) overrides the default options for running
+            % the stream.
+            %
+            % Options
+            %
+            %     start: allowed values are true or false. Default true.
+            %         Whether or not to start the stream running before waiting for
+            %         available captured data.
+            %
+            %     wait_period: allowed values are a > 0. Default 0.1.
+            %         The period of time the function should pause before checking if
+            %         there is captured data available.
+            %
+            %     struct: allowed values are true or false. Default false.
+            %         Whether or not to return the data as a structure.
+            %
+            % See also START_STREAM, GET_STREAM.
+            p = inputParser();
+            p.addParameter('start', true, @islogical);
+            p.addParameter('wait_period', 0.1, @(x)(x > 0));
+            p.addParameter('struct', false, @islogical);
+            p.parse(varargin{:});
             stream_name = sprintf('S%d', stream);
-            if ~exist('start', 'var') || start
+            if p.Results.start
                 if ~obj.start_stream(stream)
                     error('Failed to start stream - perhaps bad parameters');
                 end
             elseif obj.get_par([stream_name 'state']) == obj.STREAM_STATE_INACTIVE
                 error('Stream not already started');
             end
-            if ~exist('wait_period', 'var')
-                wait_period = 0.1;
-            end
             while obj.get_par([stream_name 'state']) == obj.STREAM_STATE_ACTIVE
-                pause(wait_period);
+                pause(p.Results.wait_period);
             end
-            [data, data_struct] = obj.get_stream(stream);
+            data = obj.get_stream(stream, p.Results.struct);
         end
         
         function b = saveobj(~)

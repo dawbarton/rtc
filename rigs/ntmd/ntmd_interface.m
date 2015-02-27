@@ -6,7 +6,6 @@ classdef ntmd_interface < rtc_interface
     
     properties
         fourier;
-        opt;
         datafields;
     end
     
@@ -43,7 +42,7 @@ classdef ntmd_interface < rtc_interface
                                 'sample_freq', 'firmware'};
             obj.datafields.dynamic_fields = {'forcing_freq', 'forcing_coeffs', ...
                                 'rand_ampl', 'x_coeffs_ave', 'x_coeffs_var', ...
-                                'x_target_coeffs', 'out_coeffs_ave'};
+                                'x_target_coeffs', 'out_coeffs_ave', 'out_coeffs_var'};
             obj.datafields.stream_fields = {'time_mod_2pi', 'x', 'x_target', ...
                                 'base', 'mass', 'force', 'out'}; 
             
