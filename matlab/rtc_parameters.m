@@ -1,7 +1,5 @@
 classdef rtc_parameters < dynamicprops
-    %rtc_interface: Interface to the real-time control device. As far as
-    %  possible this object is designed to be state-less. (The exception
-    %  being the parameter list.)
+    %RTC_PARAMETERS A helper class to easily access device parameters.
 
     properties (Hidden)
         rtc_;
@@ -23,17 +21,18 @@ classdef rtc_parameters < dynamicprops
             
             obj.rtc_ = rtc;
             obj.str_ = 'Accessible RTC parameters:\n';
-            obj.names_ = cell(1, length(rtc.par_info));
             for i = 1:length(rtc.par_info)
-                obj.names_{i} = rtc.par_info(i).name;
-                obj.str_ = [obj.str_, '\t', rtc.par_info(i).name, '\n']; 
+                obj.add_property(rtc.par_info(i).name);
             end
-            obj.add_properties();
         end
         
-        function add_properties(obj)
-            for i = 1:length(obj.names_)
-                name = obj.names_{i};
+        function add_property(obj, names)
+            if ~iscell(names)
+                names = {names};
+            end
+            for i = 1:length(names)
+                name = names{i};
+                obj.str_ = [obj.str_, '\t', name, '\n']; 
                 prop = obj.addprop(name);
                 prop.GetMethod = @(obj)obj.rtc_.get_par(name);
                 prop.SetMethod = @(obj, value)obj.rtc_.set_par(name, value);
@@ -45,10 +44,8 @@ classdef rtc_parameters < dynamicprops
     end        
     
     methods (Static = true)
-        function obj = loadobj(obj)
-            % Add the dynamic properties that will have been lost through
-            % saving/loading in Matlab
-            obj.add_properties();
+        function obj = loadobj(~)
+            obj = [];
         end
     end
     
