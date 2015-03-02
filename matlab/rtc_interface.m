@@ -412,9 +412,16 @@ classdef (ConstructOnLoad) rtc_interface < handle
             %
             % See also START_STREAM, GET_STREAM.
             p = inputParser();
-            p.addParameter('start', true, @islogical);
-            p.addParameter('wait_period', 0.1, @(x)(x > 0));
-            p.addParameter('struct', false, @islogical);
+            if ismethod(p, 'addParameter')
+                % New versions of Matlab
+                add_par = @p.addParameter;
+            else
+                % Old versions of Matlab
+                add_par = @p.addParamValue;
+            end
+            add_par('start', true, @islogical);
+            add_par('wait_period', 0.1, @(x)(x > 0));
+            add_par('struct', false, @islogical);
             p.parse(varargin{:});
             stream_name = sprintf('S%d', stream);
             if p.Results.start

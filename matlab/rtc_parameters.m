@@ -4,7 +4,6 @@ classdef rtc_parameters < dynamicprops
     properties (Hidden)
         rtc_;
         str_;
-        names_;
     end
     
     methods
@@ -15,10 +14,6 @@ classdef rtc_parameters < dynamicprops
 
     methods
         function obj = rtc_parameters(rtc)
-            % function obj = rtc_parameters(rtc)
-            % 
-            % Construct a helper object to simplify access to parameters
-            
             obj.rtc_ = rtc;
             obj.str_ = 'Accessible RTC parameters:\n';
             for i = 1:length(rtc.par_info)
