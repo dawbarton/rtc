@@ -31,7 +31,8 @@ classdef ntmd_interface < rtc_interface
             obj.opt.wait_time = 1; % Time (in secs) to wait for Fourier coefficients to settle
             obj.opt.max_waits = 10; % Maximum number of times to wait
             obj.opt.max_picard_iter = 5; % Maximum number of Picard iterations to do
-            obj.opt.x_coeffs_var_tol = 1e-3; % Maximum (normalised) variance of Fourier coefficients for steady-state behaviour
+            obj.opt.x_coeffs_var_tol_rel = 1e-3; % Maximum (normalised) variance of Fourier coefficients for steady-state behaviour
+            obj.opt.x_coeffs_var_tol_abs = 2e-3; % Maximum (absolute) variance of Fourier coefficients for steady-state behaviour
             obj.opt.x_coeffs_tol = 1e-1; % Maximum tolerance for difference between two Fourier coefficients (mm)
             
             % Data recording fields
