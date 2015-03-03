@@ -36,11 +36,15 @@ classdef rtc_parameters < dynamicprops
                 prop.Transient = false;
             end
         end
-    end        
+        
+        function b = saveobj(~)
+            b = [];
+        end
+    end
     
     methods (Static = true)
-        function obj = loadobj(~)
-            obj = [];
+        function a = loadobj(~)
+            a = [];
         end
     end
     
