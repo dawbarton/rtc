@@ -261,7 +261,7 @@ void rtc_user_main(void)
         /* other inputs */
         coil = in_volt[1];
         x_accn = in_volt[2]/0.01001f; /* PCB Piezotronics Model 352C22, S/N 88308, 1.001mV/m/s^2, x10 gain */
-        base_accn = in_volt[3]/1.028f; /* PCB Piezotronics Model 333M07, S/N 26026, 10.28mV/m/s^2, x100 gain */
+        base_accn = in_volt[3]/0.1028f; /* PCB Piezotronics Model 333M07, S/N 26026, 10.28mV/m/s^2, x10 gain */
         
 	/* calculate relative displacement */
 	x = in_volt[0];
