@@ -46,8 +46,9 @@ classdef eh_interface < rtc_interface
             obj.datafields.stream_fields = {'time_mod_2pi', 'x', 'x_target', 'out', 'coil', 'x_accn', 'base_accn'};
 
             % Default control gains (that work!)
-            obj.par.x_Kp =  0.100;
-            obj.par.x_Kd = -0.008;
+            obj.par.input_filter_freq = 0.01; % Cut-off at 50Hz
+            obj.par.x_Kp =  2.000;
+            obj.par.x_Kd = -0.005;
             
             % Shift the zero point of the shaker somewhere sensible
             obj.par.forcing_coeffs(obj.fourier.idx_DC) = -1.5;
