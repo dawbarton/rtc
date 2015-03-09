@@ -32,6 +32,7 @@ typedef unsigned __int32  uint32_t;
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__) || defined(_WIN32_WCE)
+#include <windows.h>
 #define LIBUSB_CALL WINAPI
 #else
 #define LIBUSB_CALL
