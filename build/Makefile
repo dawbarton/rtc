@@ -1,4 +1,5 @@
 # Locate Starterware
+APP_ROOT?=../
 ROOT=$(APP_ROOT)starterware/
 
 # The device and platform being used
