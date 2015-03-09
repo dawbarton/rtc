@@ -1,0 +1,128 @@
+<h1>Installing on Windows</h1>
+
+<p>Copyright David A.W. Barton (david.barton@bristol.ac.uk) 2015.</p>
+
+<p>All of the associated source code and documentation is released under the MIT license.</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</p>
+
+<h2>Overview</h2>
+
+<p>This document describes how to build firmware for the real-time controller, install suitable device drivers for the real-time controller and use it with Matlab.</p>
+
+<p>It is not necessary to build the firmware if you have already have suitable firmware to use.</p>
+
+<h2>To build the real-time controller firmware (optional)</h2>
+
+<p>The instructions below uses the Cygwin environment to build the firmware. It should also be possible to use the MSYS environment in much the same way (untested!).</p>
+
+<ol>
+<li>Download GCC ARM compiler from <a href="https://launchpad.net/gcc-arm-embedded/4.9/4.9-2014-q4-major/+download/gcc-arm-none-eabi-4_9-2014q4-20141203-win32.exe">https://launchpad.net/gcc-arm-embedded/4.9/4.9-2014-q4-major/+download/gcc-arm-none-eabi-4_9-2014q4-20141203-win32.exe</a></li>
+<li>Install ARM compiler.
+<ul>
+<li>At the end you will have the option of adding the compiler to your path, doing so will make your life <em>slightly</em> easier.</li>
+</ul></li>
+<li>Download Cygwin from <a href="http://www.cygwin.org/">http://www.cygwin.org/</a>.</li>
+<li>Install Cygwin with git and make selected (both under the devel category).
+<ul>
+<li>It will say that other packages are required; accept the suggestions.</li>
+</ul></li>
+<li><p>Start the Cygwin terminal. By default the home directory is in c:\cygwin\home\<username>.</p>
+
+<ul>
+<li><p>If you didn't add the compiler to your path, you will have to add it to your path in Cygwin with the command</p>
+
+<pre><code>export PATH=$PATH:"/cygdrive/c/Program Files (x86)/GNU Tools ARM Embedded/4.9 2014q4/bin"
+</code></pre></li>
+</ul></li>
+<li><p>Decide where you are going to store the files.</p>
+
+<ul>
+<li><p>If you want to store them in your normal Windows Documents folder it is easiest to create a symbolic link to the appropriate place. E.g., if you have already created the folder "controlcont" in your Documents folder, issue the command</p>
+
+<pre><code>ln -s /cygdrive/c/Users/&lt;username&gt;/My\ Documents/controlcont
+</code></pre></li>
+</ul>
+
+<p>to create a link to that folder in your Cygwin home directory, then <code>cd controlcont</code>.</p>
+
+<ul>
+<li>Alternatively, create a new directory in your Cygwin home directory, e.g., <code>mkdir controlcont</code> followed by <code>cd controlcont</code>.</li>
+</ul></li>
+<li><p>Clone the necessary repositories from <a href="http://github.com/">GitHub</a>.</p>
+
+<pre><code>git clone https://github.com/db9052/rtc rtc
+cd rtc
+git clone https://github.com/db9052/starterware starterware
+</code></pre></li>
+<li><p>Build TI Starterware.</p>
+
+<pre><code>cd build
+make starterware
+cd ..
+</code></pre></li>
+<li><p>Build the rig of your choice, e.g., duffing_numerical for a simple test</p>
+
+<pre><code>cd rigs/duffing_numerical
+make
+</code></pre></li>
+<li><p>Put the resulting <code>.bin</code> file on a micro SD card as app.bin. There should also be a file called uEnv.txt on the SD card which contains the following text (only).</p>
+
+<pre><code>uenvcmd=mmcinfo;fatload mmc 0 0x80000000 app.bin; go 0x80000000
+</code></pre></li>
+</ol>
+
+<p>Once you have done all this once, you only need to repeat steps 9 and 10 to compile new versions of your firmware.</p>
+
+<h2>Device drivers for the USB interface to the real-time controller</h2>
+
+<ol>
+<li>Build the firmware (as above) and start up the real-time controller by plugging it into a suitable USB port.
+<ul>
+<li>If your USB port cannot provide enough power, a 5V power supply can be used to power the board using the barrel connector.</li>
+</ul></li>
+<li>Ignore any of Window's requests for installing a device driver.</li>
+<li>Download Zadig from <a href="http://zadig.akeo.ie">http://zadig.akeo.ie</a> and run it as an Administrator.</li>
+<li>Select the "Real-time controller (Interface 0)" and the WinUSB driver. Press "Install WCID Driver".</li>
+<li>Select the "Real-time controller (Interface 1)" and the WinUSB driver. Press "Install WCID Driver".</li>
+<li>Download the "Latest Windows binaries" from <a href="http://libusb.info">http://libusb.info</a> and extract <code>libusb-1.0.dll</code> from either the MS32 or the MS64 directory depending on whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and Matlab). Rename it as <code>libusb.dll</code> and put it in the <code>rtc\matlab</code> folder alongside <code>rtc_interface.m</code>.</li>
+<li>The real-time controller is now ready for use with Matlab.</li>
+</ol>
+
+<h2>To use the real-time controller in Matlab</h2>
+
+<ol>
+<li>Make sure that you have a suitable compiler for using the Matlab mex function. (Check the output of <code>mex -setup</code>.)
+<ul>
+<li>A suitable (free) compiler is Microsoft Visual Studio Community Edition.</li>
+</ul></li>
+<li>Start Matlab.</li>
+<li>Add <code>controlcont\rtc\matlab</code> to the Matlab path (<code>help addpath</code>).</li>
+<li>Add the appropriate rig directory to the Matlab path, e.g., <code>controlcont\rtc\rigs\duffing_numerical</code>.</li>
+<li><p>Create the interface to the controller with</p>
+
+<pre><code>rtc = duffing_numerical_interface()
+</code></pre></li>
+<li><p>All the controller parameters are available through <code>rtc.par.&lt;variable name&gt;</code>.</p></li>
+<li>Time series data can be collected through the use of streams; see the help for <code>rtc.set_stream</code>, <code>rtc.run_stream</code>.
+<ul>
+<li>By default, 5 different streams (0-4) are available for use.</li>
+<li>The maximum amount of data a stream can return is around 8 MB.</li>
+</ul></li>
+</ol>
