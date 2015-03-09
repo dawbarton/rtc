@@ -8,7 +8,7 @@
   <style type="text/css">code{white-space: pre;}</style>
 </head>
 <body>
-<h1 id="installing-on-windows">Installing on Windows</h1>
+<h1 id="installing-on-linux">Installing on Linux</h1>
 <p>Copyright David A.W. Barton (david.barton@bristol.ac.uk) 2015.</p>
 <p>All of the associated source code and documentation is released under the MIT license.</p>
 <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
@@ -18,34 +18,16 @@
 <p>This document describes how to build firmware for the real-time controller, install suitable device drivers for the real-time controller and use it with Matlab.</p>
 <p>It is not necessary to build the firmware if you have already have suitable firmware to use.</p>
 <h2 id="to-build-the-real-time-controller-firmware-optional">To build the real-time controller firmware (optional)</h2>
-<p>The instructions below uses the Cygwin environment to build the firmware. It should also be possible to use the MSYS environment in much the same way (untested!).</p>
 <ol style="list-style-type: decimal">
-<li><p>Download GCC ARM compiler from <a href="https://launchpad.net/gcc-arm-embedded/4.9/4.9-2014-q4-major/+download/gcc-arm-none-eabi-4_9-2014q4-20141203-win32.exe">https://launchpad.net/gcc-arm-embedded/4.9/4.9-2014-q4-major/+download/gcc-arm-none-eabi-4_9-2014q4-20141203-win32.exe</a>.</p>
+<li><p>Download GCC ARM compiler from <a href="https://launchpad.net/gcc-arm-embedded/4.9/4.9-2014-q4-major/">https://launchpad.net/gcc-arm-embedded/4.9/4.9-2014-q4-major/</a>.</p>
 <ul>
 <li>Any recent version (i.e., post 2013) should work. Probably even ones earlier than that will work as well.</li>
 </ul></li>
-<li><p>Install ARM compiler.</p>
+<li><p>Install ARM compiler and add it to your path.</p></li>
+<li><p>Install Git and Make via your system package manager.</p>
 <ul>
-<li>At the end you will have the option of adding the compiler to your path, doing so will make your life <em>slightly</em> easier.</li>
-</ul></li>
-<li><p>Download Cygwin from <a href="http://www.cygwin.org/">http://www.cygwin.org/</a>.</p></li>
-<li><p>Install Cygwin with git and make selected (both under the devel category).</p>
-<ul>
-<li>It will say that other packages are required; accept the suggestions.</li>
-</ul></li>
-<li><p>Start the Cygwin terminal. By default the home directory is in <code>c:\cygwin\home\&lt;username&gt;</code>.</p>
-<ul>
-<li><p>If you didn't add the compiler to your path, you will have to add it to your path in Cygwin with the command</p>
-<pre><code>export PATH=$PATH:&quot;/cygdrive/c/Program Files (x86)/GNU Tools ARM Embedded/4.9 2014q4/bin&quot;</code></pre></li>
-</ul></li>
-<li><p>Decide where you are going to store the files.</p>
-<ul>
-<li><p>If you want to store them in your normal Windows Documents folder it is easiest to create a symbolic link to the appropriate place. E.g., if you have already created the folder &quot;controlcont&quot; in your Documents folder, issue the command</p>
-<pre><code>ln -s /cygdrive/c/Users/&lt;username&gt;/My\ Documents/controlcont</code></pre></li>
-</ul>
-<p>to create a link to that folder in your Cygwin home directory, then <code>cd controlcont</code>.</p>
-<ul>
-<li>Alternatively, create a new directory in your Cygwin home directory, e.g., <code>mkdir controlcont</code> followed by <code>cd controlcont</code>.</li>
+<li><p>Fedora: <code>sudo yum install git make</code>.</p></li>
+<li><p>Ubuntu/Debian: <code>sudo apt-get install git build-essential</code>.</p></li>
 </ul></li>
 <li><p>Clone the necessary repositories from <a href="http://github.com/db9052/">GitHub</a>.</p>
 <pre><code>git clone https://github.com/db9052/rtc rtc
@@ -61,25 +43,25 @@ make</code></pre></li>
 <li><p>Put the resulting <code>.bin</code> file on a micro SD card as app.bin. There should also be a file called <code>uEnv.txt</code> on the SD card which contains the following text (only).</p>
 <pre><code>uenvcmd=mmcinfo;fatload mmc 0 0x80000000 app.bin; go 0x80000000</code></pre></li>
 </ol>
-<p>Once you have done all this once, you only need to repeat steps 9 and 10 to compile new versions of your firmware.</p>
+<p>Once you have done all this once, you only need to repeat steps 6 and 7 to compile new versions of your firmware.</p>
 <h2 id="device-drivers-for-the-usb-interface-to-the-real-time-controller">Device drivers for the USB interface to the real-time controller</h2>
 <ol style="list-style-type: decimal">
-<li><p>Build the firmware (as above) and start up the real-time controller by plugging it into a suitable USB port.</p>
+<li><p>Copy <code>rtc/udev/90-rtc.rules</code> to <code>/etc/udev/rules.d/90-rtc.rules</code>.</p>
 <ul>
-<li>If your USB port cannot provide enough power, a 5V power supply can be used to power the board using the barrel connector.</li>
+<li>You may need to run <code>udevadm control --reload-rules</code> to force udev to reload its rules.</li>
 </ul></li>
-<li><p>Ignore any of Window's requests for installing a device driver.</p></li>
-<li><p>Download Zadig from <a href="http://zadig.akeo.ie">http://zadig.akeo.ie</a> and run it as an Administrator.</p></li>
-<li><p>Select the &quot;Real-time controller (Interface 0)&quot; and the WinUSB driver. Press &quot;Install WCID Driver&quot;.</p></li>
-<li><p>Select the &quot;Real-time controller (Interface 1)&quot; and the WinUSB driver. Press &quot;Install WCID Driver&quot;.</p></li>
-<li><p>Download the &quot;Latest Windows binaries&quot; from <a href="http://libusb.info">http://libusb.info</a> and extract <code>libusb-1.0.dll</code> from either the MS32 or the MS64 directory depending on whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and Matlab). Rename it as <code>libusb.dll</code> and put it in the <code>rtc\matlab</code> folder alongside <code>rtc_interface.m</code>.</p></li>
+<li><p>Install libusb via your system package manager.</p>
+<ul>
+<li><p>Fedora: <code>sudo yum install libusb</code>.</p></li>
+<li><p>Ubuntu/Debian: <code>sudo apt-get install libusb</code>.</p></li>
+</ul></li>
 <li><p>The real-time controller is now ready for use with Matlab.</p></li>
 </ol>
 <h2 id="to-use-the-real-time-controller-in-matlab">To use the real-time controller in Matlab</h2>
 <ol style="list-style-type: decimal">
 <li><p>Make sure that you have a suitable compiler for using the Matlab mex function. (Check the output of <code>mex -setup</code>.)</p>
 <ul>
-<li>A suitable (free) compiler is Microsoft Visual Studio Community Edition.</li>
+<li>A suitable (free) compiler is gcc which is installable via your system package manager.</li>
 </ul></li>
 <li><p>Start Matlab.</p></li>
 <li><p>Add <code>controlcont\rtc\matlab</code> to the Matlab path (<code>help addpath</code>).</p></li>
@@ -93,6 +75,6 @@ make</code></pre></li>
 <li><p>The maximum amount of data a stream can return is around 8 MB.</p></li>
 </ul></li>
 </ol>
-<!-- pandoc -s install-windows.txt -o install-windows.html -->
+<!-- pandoc -s install-linux.txt -o install-linux.html -->
 </body>
 </html>
