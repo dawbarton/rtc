@@ -43,7 +43,7 @@ $(APP_NAME).bin: $(SRC) $(INC)
 	$(LD) $(LDFLAGS) $(LPATH) -o bin/$(APP_NAME).out -Map bin/$(APP_NAME).map bin/*.o* \
 		$(STARTERWARE_LIB) -lc -lgcc $(STARTERWARE_LIB) $(RUNTIMELIB) -T $(APP_ROOT)/build/loader.lds
 	$(BIN) $(BINFLAGS) bin/$(APP_NAME).out $(APP_NAME).bin 
-	@git diff --exit-code --quiet || (echo; echo "*** WARNING: uncommitted changes; firmware version might be wrong! ***")
+#@git diff --exit-code --quiet || (echo; echo "*** WARNING: uncommitted changes; firmware version might be wrong! ***")
 
 # Build Starterware libraries
 starterware:
