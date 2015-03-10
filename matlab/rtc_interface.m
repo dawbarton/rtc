@@ -25,6 +25,7 @@ classdef (ConstructOnLoad) rtc_interface < handle
         ep_out;
         par_info;
         par_idx;
+        timestamp_created;
     end
 
     properties
@@ -158,7 +159,10 @@ classdef (ConstructOnLoad) rtc_interface < handle
             %RTC_INTERFACE Interface to the real-time control device. As far as
             %  possible this object is designed to be state-less. (The exception
             %  being the parameter list.)
-            
+
+            % Record when the object is created
+            obj.timestamp_created = clock();
+                
             % Load the library
             if ~libisloaded('libusb')
                 [obj.libusb_notfound, obj.libusb_warnings] = loadlibrary('libusb','libusb.h');
@@ -197,7 +201,7 @@ classdef (ConstructOnLoad) rtc_interface < handle
             % DELETE  Destroy the interface to the real-time controller.
             if ~obj.dev.isNull()
                 calllib('libusb', 'libusb_close', obj.dev);
-                fprintf('Released RTC device\n');
+                fprintf('%s: Released RTC device that was created on %04d-%02d-%02d at %02d:%02d:%02.0f\n', datestr(now, 13), obj.timestamp_created);
             end
             calllib('libusb', 'libusb_exit', libpointer);
         end
