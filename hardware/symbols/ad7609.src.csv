@@ -1,0 +1,121 @@
+# This is the template file for creating symbols with tragesym									
+# every line starting with '#' is a comment line.									
+# save it as text file with tab separated cells and start tragesym									
+									
+[options]									
+# wordswap swaps labels if the pin is on the right side an looks like this:									
+"#   ""PB1 (CLK)"". That's useful for micro controller port labels"									
+# rotate_labels rotates the pintext of top and bottom pins									
+#   this is useful for large symbols like FPGAs with more than 100 pins									
+# sort_labels will sort the pins by it's labels									
+#   useful for address ports	 busses	 ...							
+wordswap	yes								
+rotate_labels	yes								
+sort_labels	no								
+generate_pinseq	yes								
+sym_width	4400								
+pinwidthvertical	200								
+pinwidthhorizontal	200								
+									
+[geda_attr]									
+# name will be printed in the top of the symbol									
+# if you have a device with slots	 you'll have to use slot= and slotdef=								
+# use comment= if there are special information you want to add									
+version	20131101								
+name	AD7609								
+device	AD7609								
+refdes	U?								
+footprint	LQFP64_10								
+description	Analogue Devices AD7609 8 channel differential A/D								
+documentation	http://www.analog.com/								
+author	David Barton <davebarton@cityinthesky.co.uk>								
+numslots	0								
+dist-license	GPL v2+								
+use-license	GPL v2+								
+#slot	1								
+#slotdef	1:								
+#slotdef	2:								
+#slotdef	3:								
+#slotdef	4:								
+#comment									
+#comment									
+#comment									
+									
+[pins]									
+# tabseparated list of pin descriptions									
+#									
+# pinnr is the physical number of the pin									
+# seq is the pinseq= attribute	 leave it blank if it doesn't matter								
+# type can be (in	 out	 io	 oc	 oe	 pas	 tp	 tri	 clk	 pwr)
+# style can be (line	dot	clk	dotclk	none). none if only want to add a net					
+# posit. can be (l	r	t	b) or empty for nets						
+# net specifies the name of the net. Vcc or GND for example.									
+# label represents the pinlabel.									
+#	"negation lines can be added with ""\_"" example: \_enable\_ "								
+#	"if you want to write a ""\"" use ""\\"" as escape sequence"								
+#									
+#pinnr	seq	type	style	posit.	net	label			
+1	1	pwr	line	l	VCC	AVCC			
+2	2	pwr	line	l	AGND	AGND			
+3	3	in	line	l		OS0			
+4	4	in	line	l		OS1			
+5	5	in	line	l		OS2			
+6	6	in	line	l		\_PAR\__SER			
+7	7	in	line	l		\_STBY\_			
+8	8	in	line	l		RANGE			
+9	9	in	line	l		CONVST_A			
+10	10	in	line	l		CONVST_B			
+11	11	in	line	l		RESET			
+12	12	in	line	l		\_RD\__SCLK			
+13	13	in	line	l		\_CS\_			
+14	14	out	line	l		BUSY			
+15	15	out	line	l		FRSTDATA			
+16	16	out	line	l		DB0			
+17	17	out	line	b		DB1			
+18	18	out	line	b		DB2			
+19	19	out	line	b		DB3			
+20	20	out	line	b		DB4			
+21	21	out	line	b		DB5			
+22	22	out	line	b		DB6			
+23	23	pwr	line	b	VDD	VDRIVE			
+24	24	out	line	b		DB7/DOUTA			
+25	25	out	line	b		DB8/DOUTB			
+26	26	pwr	line	b	AGND	AGND			
+27	27	out	line	b		DB9			
+28	28	out	line	b		DB10			
+29	29	out	line	b		DB11			
+30	30	out	line	b		DB12			
+31	31	out	line	b		DB13			
+32	32	out	line	b		DB14			
+48	48	pwr	line	r	VCC	AVCC			
+47	47	pwr	line	r	AGND	AGND			
+46	46	pwr	line	r	AGND	REFGND			
+45	45	pas	line	r		REFCAPB			
+44	44	pas	line	r		REFCAPA			
+43	43	pwr	line	r	AGND	REFGND			
+42	42	in	line	r		REFIN			
+41	41	pwr	line	r	AGND	AGND			
+40	40	pwr	line	r	AGND	AGND			
+39	39	pas	line	r		REGCAP			
+38	38	pwr	line	r	VCC	AVCC			
+37	37	pwr	line	r	VCC	AVCC			
+36	36	pas	line	r		REGCAP			
+35	35	pwr	line	r	AGND	AGND			
+34	34	in	line	r		REFSEL			
+33	33	out	line	r		DB15			
+64	64	in	line	t		V8-			
+63	63	in	line	t		V8+			
+62	62	in	line	t		V7-			
+61	61	in	line	t		V7+			
+60	60	in	line	t		V6-			
+59	59	in	line	t		V6+			
+58	58	in	line	t		V5-			
+57	57	in	line	t		V5+			
+56	56	in	line	t		V4-			
+55	55	in	line	t		V4+			
+54	54	in	line	t		V3-			
+53	53	in	line	t		V3+			
+52	52	in	line	t		V2-			
+51	51	in	line	t		V2+			
+50	50	in	line	t		V1-			
+49	49	in	line	t		V1+			
