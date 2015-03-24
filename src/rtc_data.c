@@ -212,6 +212,8 @@ void rtc_stream_change_state(void *new_value, void *trigger_data)
 			/* Check that we will capture some data but not too much */
 			if ((rtc_streams[idx].nparams > 0) && (rtc_streams[idx].data_size <= MAX_STREAM_BUFFER) && (rtc_streams[idx].samples != 0))
 				rtc_streams[idx].state = RTC_STREAM_STATE_ACTIVE;
+			else
+				rtc_streams[idx].state = RTC_STREAM_STATE_INACTIVE;
 			break;
 		case RTC_STREAM_STATE_FINISHED:
 		case RTC_STREAM_STATE_INACTIVE:
