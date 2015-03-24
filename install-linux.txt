@@ -144,6 +144,10 @@ To use the real-time controller in Python (2.x or 3.x)
 
             pip install python-libusb1
 
+    * The python-libusb1 files usb1.py and libusb1.py are included for
+      convenience and, as such, a separate installation of python-libusb1 is not
+      needed.
+
 2. Start Python.
 
 3. Import the Python module and create the interface to the controller with
