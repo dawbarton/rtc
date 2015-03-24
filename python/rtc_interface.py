@@ -3,8 +3,8 @@
 
 Should work with both Python 2 and Python 3
 
-Requires: numpy and libusb1 python modules and the appropriate libusb1
-library (Windows or Linux)
+Requires: libusb1 python modules and the appropriate libusb1 library
+(Windows or Linux)
 
 @author: David A.W. Barton (david.barton@bristol.ac.uk)
 
@@ -38,8 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 import usb1  # Import libusb1
+import zlib
+import ctypes
 import struct
-import numpy as np
 from array import array
 import threading
 from warnings import warn
@@ -64,9 +65,6 @@ CMD_ACK = struct.unpack("<I", b'\xFF\xAB\xCD\xFF')[0]
 STREAM_STATE_INACTIVE = 0
 STREAM_STATE_ACTIVE   = 1
 STREAM_STATE_FINISHED = 2
-
-# CRC set-up
-CRC_INITIAL = 0xFFFFFFFF
 
 # USB device lock
 usblock = threading.Lock()
@@ -146,7 +144,7 @@ class rtc_interface(object):
         if (data is None) or (len(data) == 0):
             self.send_raw(struct.pack("<HI", cmd, 0))
         else:
-            crc = crc_final(crc_update(CRC_INITIAL, data))
+            crc = ctypes.c_uint32(zlib.crc32(data)).value
             self.send_raw(struct.pack("<HI%dsI" % len(data), cmd, len(data), data, crc))
 
     def recv_raw(self, nbytes):
@@ -178,7 +176,7 @@ class rtc_interface(object):
             # Process the data
             output = data[4:data_len+4]
             output_crc = struct.unpack("<I", data[data_len+4:data_len+8])[0]
-            crc = crc_final(crc_update(CRC_INITIAL, output))
+            crc = ctypes.c_uint32(zlib.crc32(output)).value
             if crc != output_crc:
                 raise rtc_exception("Error in data stream returned from RTC device - CRC failed")
             else:
@@ -399,32 +397,3 @@ class rtc_interface(object):
         while self.get_par(stream_name + "state") == STREAM_STATE_ACTIVE:
             sleep(wait_period)
         return self.get_stream(stream, struct)
-
-
-## CRC tables - this is the same as used in the PNG standard
-crc_table = np.zeros(256, dtype=np.uint32)
-
-def crc_setup():
-    """Set up the CRC tables"""
-    for n in np.arange(0, 256, dtype=np.uint32):
-        c = n
-        for k in np.arange(0, 8, dtype=np.uint32):
-            if c & 1:
-                c = 0xEDB88320 ^ (c >> 1)
-            else:
-                c = c >> 1
-        crc_table[n] = c
-
-def crc_update(crc, data):
-    """Update the CRC with the supplied data; use crc=CRC_INITIAL to start"""
-    if type(data) is str:
-        data = struct.unpack("<%dB" % len(data), data)
-    for i in range(0, len(data)):
-        crc = crc_table[(crc ^ data[i]) & 0xFF] ^ (crc >> 8)
-    return crc
-
-def crc_final(crc):
-    """Finalise the CRC"""
-    return crc ^ 0xFFFFFFFF
-
-crc_setup()
