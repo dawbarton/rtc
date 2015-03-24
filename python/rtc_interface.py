@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
-An interface to the Beaglebone Black-based Real-Time Controller
+"""An interface to the Beaglebone Black-based Real-Time Controller
 
 Should work with both Python 2 and Python 3
+
+Requires: numpy and libusb1 python modules and the appropriate libusb1
+library (Windows or Linux)
 
 @author: David A.W. Barton (david.barton@bristol.ac.uk)
 
@@ -31,11 +33,11 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 """
 
 
-import usb.core  # Import pyusb
-import usb.util
+import usb1  # Import libusb1
 import struct
 import numpy as np
 from array import array
@@ -105,20 +107,26 @@ class rtc_parameters(object):
 
 ## rtc_interface - main device interface
 class rtc_interface(object):
-    """Interface to the real-time control device. As far as possible this
-    object is designed to be state-less. (The exception being the parameter
-    list.)"""
+    """RTC_INTERFACE Interface to the real-time control device. As far as
+    possible this object is designed to be state-less. (The exception
+    being the parameter list.)"""
 
     def __init__(self):
-        # Get the device
-        self.dev = usb.core.find(idVendor=0x0123, idProduct=0x4567)
-        if self.dev is None:
-            raise rtc_exception("RTC device not found")
+        """RTC_INTERFACE Interface to the real-time control device. As far as
+        possible this object is designed to be state-less. (The exception
+        being the parameter list.)"""
 
         # Set the end points and interface of interest
         self.intf = 0
         self.ep_out = 1
         self.ep_in = 129
+
+        # Get the device
+        self.context = usb1.LibUSBContext()
+        self.dev = self.context.openByVendorIDAndProductID(0x0123, 0x4567)
+        if self.dev is None:
+            raise rtc_exception("RTC device not found")
+        self.dev.claimInterface(self.intf)
 
         # The timeout for any USB communications
         self.timeout = 5000
@@ -130,32 +138,25 @@ class rtc_interface(object):
         self.par = rtc_parameters(self)
 
     def send_raw(self, data):
-        """Send raw data to the RTC device"""
-        assert self.dev.write(self.ep_out, data, self.intf, self.timeout) == len(data)
+        """SEND_RAW  Send raw data to the RTC device (internal)."""
+        assert self.dev.bulkWrite(self.ep_out, data, self.timeout) == len(data)
 
     def send_cmd(self, cmd, data=None):
-        """Send a command to the RTC device"""
+        """SEND_CMD  Send a command to the RTC device (internal)."""
         if (data is None) or (len(data) == 0):
             self.send_raw(struct.pack("<HI", cmd, 0))
         else:
-            if type(data) is bytes:
-                array_data = array('B')
-                array_data.fromstring(data)
-                crc = crc_final(crc_update(CRC_INITIAL, array_data))
-                self.send_raw(struct.pack("<HI%dsI" % len(data), cmd, len(data), data, crc))
-            elif type(data) is array:
-                bytes_data = data.tostring()
-                crc = crc_final(crc_update(CRC_INITIAL, data))
-                self.send_raw(struct.pack("<HI%dsI" % len(bytes_data), cmd, len(data), bytes_data, crc))
+            crc = crc_final(crc_update(CRC_INITIAL, data))
+            self.send_raw(struct.pack("<HI%dsI" % len(data), cmd, len(data), data, crc))
 
     def recv_raw(self, nbytes):
-        """Read raw data from the RTC device"""
+        """RECV_RAW  Receive raw data from the RTC device (internal)."""
         if nbytes % MAX_PACKET_SIZE != 0:
             warn("recv_raw should be used with a multiple of MAX_PACKET_SIZE bytes to avoid potential data corruption")
-        return self.dev.read(self.ep_in, nbytes, self.intf, self.timeout)
+        return self.dev.bulkRead(self.ep_in, nbytes, self.timeout)
 
     def recv_cmd(self):
-        """Read the return value from a command from the RTC device"""
+        """RECV_CMD  Receive the results of a command from the RTC device (internal)."""
         data = self.recv_raw(MAX_PACKET_SIZE)
         if len(data) < 4:
             raise rtc_exception("No intelligible response from RTC device")
@@ -184,15 +185,15 @@ class rtc_interface(object):
                 return output
 
     def release_usb(self):
-        """Release the USB interface to the RTC device"""
-        usb.util.release_interface(self.dev, self.intf)
+        """RELEASE_USB Release the USB interface to the RTC device"""
+        self.dev.releaseInterface(self.intf)
 
     def get_par_list(self):
-        """Get the parameters available to access on the RTC device"""
+        """GET_PAR_LIST Get the parameters available to access on the RTC device (internal)."""
         type_sizes = {'b' : 1, 'h' : 2, 'i' : 4, 'B' : 1, 'H' : 2, 'I' : 4, 'c' : 1, 'f' : 4}
         with usblock:
             self.send_cmd(CMD_GET_PAR_NAMES)
-            names = self.recv_cmd().tostring()[0:-1].split(b"\0")
+            names = self.recv_cmd()[0:-1].split(b"\0")
             self.send_cmd(CMD_GET_PAR_SIZES)
             sizes = struct.unpack("<%dI" % len(names), self.recv_cmd())
             self.send_cmd(CMD_GET_PAR_TYPES)
@@ -215,7 +216,11 @@ class rtc_interface(object):
             self.par_id[par_name] = i
 
     def set_par(self, names, values):
-        """Set the values of particular parameters on the RTC device"""
+        """SET_PAR  Set the values of the specified parameters.
+            
+        OBJ.SET_PAR(NAME, VALUE) sets the value of the parameter NAME to VALUE.
+        Both NAME and VALUE can be arrays in the case of setting multiple
+        parameter values simultaneously."""
         if type(names) is str:
             names = [names]
             values = [values]
@@ -238,7 +243,10 @@ class rtc_interface(object):
                 raise rtc_exception("Failed to set parameter values")
 
     def get_par(self, names):
-        """Get the values of particular parameters from the RTC device"""
+        """GET_PAR  Get the values of the specified parameters.
+            
+        OBJ.GET_PAR(NAME) gets the value of the parameter NAME. NAME can be an
+        array to get multiple parameter values simultaneously."""
         if type(names) is str:
             names = [names]
             islist = False
@@ -260,7 +268,9 @@ class rtc_interface(object):
             par_type = self.par_info[par_id]["type"]
             par_count = self.par_info[par_id]["count"]
             par_size = self.par_info[par_id]["size"]
-            if par_count > 1:
+            if par_type == 'c':
+                data_list.append(data[idx:idx+par_size])
+            elif par_count > 1:
                 data_list.append(array(par_type,
                                        struct.unpack("<%d%s" % (par_count, par_type),
                                                      data[idx:idx+par_size])))
@@ -275,7 +285,20 @@ class rtc_interface(object):
             return data_list[0]
 
     def set_stream(self, stream, parameters=None, samples=None, downsample=None):
-        """Set stream parameters, sample count and downsample rate"""
+        """SET_STREAM  Set stream recording properties.
+            
+        OBJ.SET_STREAM(ID, NAMES, SAMPLES, DOWNSAMPLE) sets the stream with
+        identifier ID (where multiple streams are available) to record the
+        parameters given by the cell array NAMES. SAMPLES data points are
+        recorded and DOWNSAMPLE data points are discarded between each recorded
+        sample.
+        
+        Example
+        
+        rtc.set_stream(0, {'x', 'out'}, 1000, 0);
+        
+        will set stream id 0 to record the parameters x and out. 1000 samples
+        will be returned with no data discarded."""
         stream_name = "S%d" % stream
         if samples is not None:
             assert(type(samples) is int)
@@ -298,7 +321,12 @@ class rtc_interface(object):
             self.set_par(stream_par, par_ids)
 
     def get_stream(self, stream):
-        """Get stream data from a finished stream"""
+        """GET_STREAM  Get the data from a particular stream.
+            
+        OBJ.GET_STREAM(ID) returns an array of data recorded in the stream given
+        by ID. If the stream is not ready, no data is returned.
+        
+        See also START_STREAM."""
         stream_name = "S%d" % stream
         if self.get_par(stream_name + "state") != STREAM_STATE_FINISHED:
             return None
@@ -329,7 +357,12 @@ class rtc_interface(object):
         return data
 
     def start_stream(self, stream):
-        """Start a stream recording data"""
+        """START_STREAM  Start a stream recording.
+            
+        OBJ.START_STREAM(ID) starts the stream given by ID recording data with
+        the current parameters from SET_STREAM.
+            
+        See also SET_STREAM."""
         stream_name = "S%d" % stream
         self.set_par(stream_name + "state", STREAM_STATE_ACTIVE)
         if self.get_par(stream_name + "state") != STREAM_STATE_INACTIVE:
@@ -338,7 +371,25 @@ class rtc_interface(object):
             return False
 
     def run_stream(self, stream, start=True, wait_period=0.1):
-        """Start a stream recording data and return the resulting data"""
+        """RUN_STREAM  Start a stream recording and then return the captured data.
+            
+        OBJ.RUN_STREAM(ID) starts the stream given by ID and then returns the
+        captured data.
+            
+        OBJ.RUN_STREAM(ID, Name, Value) overrides the default options for running
+        the stream.
+            
+        Options
+        
+            start: allowed values are true or false. Default true.
+                Whether or not to start the stream running before waiting for
+                available captured data.
+            
+            wait_period: allowed values are a > 0. Default 0.1.
+                The period of time the function should pause before checking if
+                there is captured data available.
+            
+        See also START_STREAM, GET_STREAM."""
         stream_name = "S%d" % stream
         if start:
             if not self.start_stream(stream):
@@ -347,7 +398,7 @@ class rtc_interface(object):
             raise rtc_exception("Stream not already started")
         while self.get_par(stream_name + "state") == STREAM_STATE_ACTIVE:
             sleep(wait_period)
-        return self.get_stream(stream)
+        return self.get_stream(stream, struct)
 
 
 ## CRC tables - this is the same as used in the PNG standard
@@ -366,7 +417,8 @@ def crc_setup():
 
 def crc_update(crc, data):
     """Update the CRC with the supplied data; use crc=CRC_INITIAL to start"""
-    assert(type(data) is array)
+    if type(data) is str:
+        data = struct.unpack("<%dB" % len(data), data)
     for i in range(0, len(data)):
         crc = crc_table[(crc ^ data[i]) & 0xFF] ^ (crc >> 8)
     return crc
