@@ -127,5 +127,41 @@ To use the real-time controller in Matlab
 
     * The maximum amount of data a stream can return is around 8 MB.
 
+Note: this assumes that a rig specific interface is used to set default
+parameters. This is not necessary and the generic rtc_interface can be used
+instead if desired.
+
+
+To use the real-time controller in Python (2.x or 3.x)
+------------------------------------------------------
+
+1. Ensure that python-libusb1 and numpy are installed for your Python
+   distribution.
+
+    * Numpy is available via most Linux package managers
+
+    * python-libusb1 is available via some Linux package managers or using pip
+
+            pip install python-libusb1
+
+2. Start Python.
+
+3. Import the Python module and create the interface to the controller with
+
+        import rtc_interface
+		rtc = rtc_interface.rtc_interface()
+
+4. All the controller parameters are available through
+   `rtc.par.<variable name>`.
+
+5. Time series data can be collected through the use of streams; see the help
+   for `rtc.set_stream`, `rtc.run_stream`.
+
+    * By default, 5 different streams (0-4) are available for use.
+
+    * The maximum amount of data a stream can return is around 8 MB.
+
+Note: if desired, rig specific interfaces for Python can be created in much the
+same way as for Matlab.
 
 <!-- pandoc -s install-linux.txt -o install-linux.html -->

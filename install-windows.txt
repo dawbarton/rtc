@@ -124,48 +124,96 @@ Device drivers for the USB interface to the real-time controller
 3. Download Zadig from <http://zadig.akeo.ie> and run it as an Administrator.
 
 4. Select the "Real-time controller (Interface 0)" and the WinUSB driver. Press
-   "Install WCID Driver".
+   "Install Driver".
 
 5. Select the "Real-time controller (Interface 1)" and the WinUSB driver. Press
-   "Install WCID Driver".
+   "Install Driver".
 
-6. Download the "Latest Windows binaries" from <http://libusb.info> and extract
-   `libusb-1.0.dll` from either the MS32 or the MS64 directory depending on
-   whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and
-   Matlab). Rename it as `libusb.dll` and put it in the `rtc\matlab` folder
-   alongside `rtc_interface.m`.
+6. If you are using Windows 8 (or above) un-check "Ignore Hubs or Composite
+   Parents" under the options menu and then select "Real-time controller" from
+   the drop-down box. Ensure that the WinUSB driver is selected and then press
+   "Replace Driver".
 
-7. The real-time controller is now ready for use with Matlab.
+8. The real-time controller is now ready for use with Matlab.
 
 
 To use the real-time controller in Matlab
 -----------------------------------------
 
-1. Make sure that you have a suitable compiler for using the Matlab mex
+1. Download the "Latest Windows binaries" from <http://libusb.info> and extract
+   `libusb-1.0.dll` from either the MS32 or the MS64 directory depending on
+   whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and
+   Matlab). Rename it as `libusb.dll` and put it in the `rtc\matlab` folder
+   alongside `rtc_interface.m`.
+
+2. Make sure that you have a suitable compiler for using the Matlab mex
    function. (Check the output of `mex -setup`.)
 
     * A suitable (free) compiler is Microsoft Visual Studio Community Edition.
 
-2. Start Matlab.
+3. Start Matlab.
 
-3. Add `controlcont\rtc\matlab` to the Matlab path (`help addpath`).
+4. Add `controlcont\rtc\matlab` to the Matlab path (`help addpath`).
 
-4. Add the appropriate rig directory to the Matlab path, e.g.,
+5. Add the appropriate rig directory to the Matlab path, e.g.,
    `controlcont\rtc\rigs\duffing_numerical`.
 
-5. Create the interface to the controller with
+6. Create the interface to the controller with
 
         rtc = duffing_numerical_interface()
 
-6. All the controller parameters are available through
+7. All the controller parameters are available through
    `rtc.par.<variable name>`.
 
-7. Time series data can be collected through the use of streams; see the help
+8. Time series data can be collected through the use of streams; see the help
    for `rtc.set_stream`, `rtc.run_stream`.
 
     * By default, 5 different streams (0-4) are available for use.
 
     * The maximum amount of data a stream can return is around 8 MB.
+
+Note: this assumes that a rig specific interface is used to set default
+parameters. This is not necessary and the generic rtc_interface can be used
+instead if desired.
+
+
+To use the real-time controller in Python (2.x or 3.x)
+------------------------------------------------------
+
+1. Ensure that python-libusb1 and numpy are installed for your Python
+   distribution.
+
+    * Numpy is available from <http://www.lfd.uci.edu/~gohlke/pythonlibs/>
+
+    * python-libusb1 is available using pip
+
+            pip install python-libusb1
+
+2. Download the "Latest Windows binaries" from <http://libusb.info> and extract
+   `libusb-1.0.dll` from either the MS32 or the MS64 directory depending on
+   whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and
+   Matlab). Put it in the `rtc\python` folder alongside
+   `rtc_interface.py`. (Keep the filename as `libusb-1.0.dll`.)
+
+3. Start Python.
+
+4. Import the Python module and create the interface to the controller with
+
+        import rtc_interface
+		rtc = rtc_interface.rtc_interface()
+
+5. All the controller parameters are available through
+   `rtc.par.<variable name>`.
+
+6. Time series data can be collected through the use of streams; see the help
+   for `rtc.set_stream`, `rtc.run_stream`.
+
+    * By default, 5 different streams (0-4) are available for use.
+
+    * The maximum amount of data a stream can return is around 8 MB.
+
+Note: if desired, rig specific interfaces for Python can be created in much the
+same way as for Matlab.
 
 
 <!-- pandoc -s install-windows.txt -o install-windows.html -->
