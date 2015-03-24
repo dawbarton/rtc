@@ -36,13 +36,8 @@ classdef (ConstructOnLoad) rtc_interface < handle
     methods (Hidden)
         function send_raw(obj, data)
             % SEND_RAW  Send raw data to the RTC device (internal).
-            transferred = libpointer('int32Ptr', 0);
-            dataptr = libpointer('uint8Ptr', data);
-            r = calllib('libusb','libusb_bulk_transfer', obj.dev, obj.ep_out, dataptr, length(data), transferred, obj.timeout);
-            if r ~= 0
-                error('Error in bulk transfer send');
-            end
-            if transferred.value ~= length(data)
+            transferred = libusb('write', data);
+            if transferred ~= length(data)
                 error('Failed to write all the data');
             end
         end
@@ -70,13 +65,7 @@ classdef (ConstructOnLoad) rtc_interface < handle
                 % Check that we aren't trying to read too much data
                 error('Trying to receive an insane amount of data');
             end
-            dataptr = libpointer('uint8Ptr', zeros(1, nbytes, 'uint8'));
-            transferred = libpointer('int32Ptr', 0);
-            r = calllib('libusb','libusb_bulk_transfer', obj.dev, obj.ep_in, dataptr, nbytes, transferred, obj.timeout);
-            if r ~= 0
-                error('Error in bulk transfer read');
-            end
-            output = dataptr.value(1:transferred.value);
+            output = libusb('read', nbytes);
         end
         
         function output = recv_cmd(obj)
@@ -163,29 +152,8 @@ classdef (ConstructOnLoad) rtc_interface < handle
             % Record when the object is created
             obj.timestamp_created = clock();
                 
-            % Load the library
-            if ~libisloaded('libusb')
-                [obj.libusb_notfound, obj.libusb_warnings] = loadlibrary('libusb','libusb.h');
-            end
-            calllib('libusb', 'libusb_init', libpointer);
-            obj.dev = calllib('libusb', 'libusb_open_device_with_vid_pid', libpointer, hex2dec('0123'), hex2dec('4567'));
-            if obj.dev.isNull()
-                error('Unable to open the RTC device');
-            else
-                fprintf('Connected to RTC device\n');
-            end
-            r = calllib('libusb','libusb_claim_interface', obj.dev, 0);
-            if r < 0
-                error('Failed to claim the RTC device');
-            end
-            
-            % Set the end points and interface of interest
-            obj.intf = 0;
-            obj.ep_out = 1;
-            obj.ep_in = 129;
-
-            % The timeout for any USB communications
-            obj.timeout = 5000;
+            % Initialise the USB library
+            libusb('init');
 
             % Get the parameter names
             obj.get_par_list();
@@ -197,13 +165,9 @@ classdef (ConstructOnLoad) rtc_interface < handle
             obj.opt.device = 'BBB-RTC';
         end
         
-        function delete(obj)
+        function delete(~)
             % DELETE  Destroy the interface to the real-time controller.
-            if ~obj.dev.isNull()
-                calllib('libusb', 'libusb_close', obj.dev);
-                fprintf('%s: Released RTC device that was created on %04d-%02d-%02d at %02d:%02d:%02.0f\n', datestr(now, 13), obj.timestamp_created);
-            end
-            calllib('libusb', 'libusb_exit', libpointer);
+            libusb('exit');
         end
         
         function set_par(obj, names, values)
