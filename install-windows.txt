@@ -161,6 +161,12 @@ To use the real-time controller in Matlab
       there are compiled MEX files ready for use in the repository and so you
       don't need to do this unless they don't work.
 
+	* If the MEX file fails to run with the error "Invalid MEX-file '...': The
+      specified module could not be found." then you need to download the
+      Microsoft Visual C++ Redistributable Packages for Visual Studio 2013 from
+      <http://www.microsoft.com/en-us/download/details.aspx?id=40784>. (These
+      are already installed on many computers.)
+
     * A suitable (free) compiler is Microsoft Visual Studio Community Edition.
 
 4. Add `controlcont\rtc\matlab` to the Matlab path (`help addpath`).

@@ -85,6 +85,7 @@ make</code></pre></li>
 <li><p>[<em>Optional: see bullet point below</em>] Make sure that you have a suitable compiler for using the Matlab mex function. (Check the output of <code>mex -setup</code>.) Then compile the MEX functions using the compile_mex function in <code>controlcont\rtc\matlab</code>.</p>
 <ul>
 <li><p>If you are using a regular 64 bit installation of Windows and Matlab, there are compiled MEX files ready for use in the repository and so you don't need to do this unless they don't work.</p></li>
+<li><p>If the MEX file fails to run with the error &quot;Invalid MEX-file '...': The specified module could not be found.&quot; then you need to download the Microsoft Visual C++ Redistributable Packages for Visual Studio 2013 from <a href="http://www.microsoft.com/en-us/download/details.aspx?id=40784">http://www.microsoft.com/en-us/download/details.aspx?id=40784</a>. (These are already installed on many computers.)</p></li>
 <li><p>A suitable (free) compiler is Microsoft Visual Studio Community Edition.</p></li>
 </ul></li>
 <li><p>Add <code>controlcont\rtc\matlab</code> to the Matlab path (<code>help addpath</code>).</p></li>
