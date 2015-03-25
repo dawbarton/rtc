@@ -73,6 +73,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
             mexErrMsgIdAndTxt("libusb:write", "Expected one output for write (the size of the data written)");
         if (!mxIsUint8(prhs[1]))
             mexErrMsgIdAndTxt("libusb:write", "Expected the input data to be a uint8 array");
+		/* Check that device isn't NULL */
+		if (device == NULL)
+            mexErrMsgIdAndTxt("libusb:write", "libusb must be initialised first!");
         /* Do the data transfer */
         ret = libusb_bulk_transfer(device, 1, (unsigned char *)mxGetData(prhs[1]), (int)mxGetNumberOfElements(prhs[1]), &sent, timeout);
         if (ret != 0)
@@ -87,8 +90,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
             mexErrMsgIdAndTxt("libusb:read", "Expected one input to read (the data size)");
         if (nlhs > 1)
             mexErrMsgIdAndTxt("libusb:read", "Expected one output for read (the data read)");
-        if (mxGetNumberOfElements(prhs[1]) == 1)
+        if (mxGetNumberOfElements(prhs[1]) != 1)
             mexErrMsgIdAndTxt("libusb:read", "Expected the input data to be a scalar");
+		/* Check that device isn't NULL */
+		if (device == NULL)
+            mexErrMsgIdAndTxt("libusb:read", "libusb must be initialised first!");
         /* Create the return data structure */
         plhs[0] = mxCreateNumericMatrix(1, (int)mxGetScalar(prhs[1]), mxUINT8_CLASS, mxREAL);
         /* Do the data transfer */
