@@ -51,7 +51,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     /* Check inputs/outputs */
     if (nrhs != 1) 
         mexErrMsgIdAndTxt("crc32:crc32", "Expected one input to crc32 (the data)");
-    if (nlhs != 1)
+    if (nlhs > 1)
         mexErrMsgIdAndTxt("crc32:crc32", "Expected one output for crc32 (the checksum)");
     if (!mxIsUint8(prhs[0]))
         mexErrMsgIdAndTxt("crc32:crc32", "Expected the input data to be a uint8 array");
@@ -63,7 +63,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     }
     
     /* Calculate the checksum */
-    crc32_update(&crc, mxGetNumberOfElements(prhs[0]), (unsigned char *)mxGetData(prhs[0]));
+    crc32_update(&crc, (unsigned int)mxGetNumberOfElements(prhs[0]), (unsigned char *)mxGetData(prhs[0]));
     crc32_final(&crc);
     
     /* Output the checksum */

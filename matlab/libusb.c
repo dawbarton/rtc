@@ -9,7 +9,7 @@ libusb_device_handle *device = NULL;
 const unsigned int timeout = 5000;
 
 /* Clear-up function */
-static void clearup()
+static void clearup(void)
 {
     if (device != NULL) {
         libusb_release_interface(device, 0);
@@ -20,8 +20,8 @@ static void clearup()
 }
 
 /* The main mex function */
-void mexFunction( int nlhs, mxArray *plhs[],
-                  int nrhs, const mxArray *prhs[])
+void mexFunction(int nlhs, mxArray *plhs[],
+                 int nrhs, const mxArray *prhs[])
 {
     char *action;
     
@@ -69,12 +69,12 @@ void mexFunction( int nlhs, mxArray *plhs[],
         /* Check inputs/outputs */
         if (nrhs != 2) 
             mexErrMsgIdAndTxt("libusb:write", "Expected one input to write (the data)");
-        if (nlhs != 1)
+        if (nlhs > 1)
             mexErrMsgIdAndTxt("libusb:write", "Expected one output for write (the size of the data written)");
         if (!mxIsUint8(prhs[1]))
             mexErrMsgIdAndTxt("libusb:write", "Expected the input data to be a uint8 array");
         /* Do the data transfer */
-        ret = libusb_bulk_transfer(device, 1, (unsigned char *)mxGetData(prhs[1]), mxGetNumberOfElements(prhs[1]), &sent, timeout);
+        ret = libusb_bulk_transfer(device, 1, (unsigned char *)mxGetData(prhs[1]), (int)mxGetNumberOfElements(prhs[1]), &sent, timeout);
         if (ret != 0)
             mexErrMsgIdAndTxt("libusb:write", "Error in bulk transfer - %d", ret);
         /* Return the number of bytes sent */
@@ -85,21 +85,28 @@ void mexFunction( int nlhs, mxArray *plhs[],
         /* Check inputs/outputs */
         if (nrhs != 2) 
             mexErrMsgIdAndTxt("libusb:read", "Expected one input to read (the data size)");
-        if (nlhs != 1)
+        if (nlhs > 1)
             mexErrMsgIdAndTxt("libusb:read", "Expected one output for read (the data read)");
-        if (!mxIsScalar(prhs[1]))
+        if (mxGetNumberOfElements(prhs[1]) == 1)
             mexErrMsgIdAndTxt("libusb:read", "Expected the input data to be a scalar");
         /* Create the return data structure */
-        plhs[0] = mxCreateNumericMatrix(1, mxGetScalar(prhs[1]), mxUINT8_CLASS, mxREAL);
+        plhs[0] = mxCreateNumericMatrix(1, (int)mxGetScalar(prhs[1]), mxUINT8_CLASS, mxREAL);
         /* Do the data transfer */
-        ret = libusb_bulk_transfer(device, 129, (unsigned char *)mxGetData(plhs[0]), mxGetNumberOfElements(plhs[0]), &received, timeout);
+        ret = libusb_bulk_transfer(device, 129, (unsigned char *)mxGetData(plhs[0]), (int)mxGetNumberOfElements(plhs[0]), &received, timeout);
         if (ret != 0)
             mexErrMsgIdAndTxt("libusb:read", "Error in bulk transfer - %d", ret);
         /* Update the size of the return data structure */
         mxSetN(plhs[0], received);
     }
-    else if (strcmp(action, "exit") == 0)
+    else if (strcmp(action, "exit") == 0) {
+        /* Check inputs/outputs */
+        if (nrhs != 1)
+            mexErrMsgIdAndTxt("libusb:exit", "Expected no inputs to exit");
+        if (nlhs != 0)
+            mexErrMsgIdAndTxt("libusb:exit", "Expected no outputs for exit");
+        /* Clear-up */
         clearup();
+    }
     else {
         mexErrMsgIdAndTxt("libusb:libusb", "Unknown command; available commands are: init, write, read and exit");
     }
