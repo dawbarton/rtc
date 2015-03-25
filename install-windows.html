@@ -77,12 +77,16 @@ make</code></pre></li>
 </ol>
 <h2 id="to-use-the-real-time-controller-in-matlab">To use the real-time controller in Matlab</h2>
 <ol style="list-style-type: decimal">
-<li><p>Download the &quot;Latest Windows binaries&quot; from <a href="http://libusb.info">http://libusb.info</a> and extract <code>libusb-1.0.dll</code> from either the MS32 or the MS64 directory depending on whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and Matlab). Rename it as <code>libusb.dll</code> and put it in the <code>rtc\matlab</code> folder alongside <code>rtc_interface.m</code>.</p></li>
-<li><p>Make sure that you have a suitable compiler for using the Matlab mex function. (Check the output of <code>mex -setup</code>.)</p>
+<li><p>[<em>Optional: see bullet point below</em>] Download the &quot;Latest Windows binaries&quot; from <a href="http://libusb.info">http://libusb.info</a> and extract <code>libusb-1.0.dll</code> from either the MS32 or the MS64 directory depending on whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and Matlab). Put it in the <code>rtc\matlab</code> folder alongside <code>rtc_interface.m</code>.</p>
 <ul>
-<li>A suitable (free) compiler is Microsoft Visual Studio Community Edition.</li>
+<li>If you are using a regular 64 bit installation of Windows, there is a copy of libusb-1.0.dll already included in the repository and so you don't need to do this.</li>
 </ul></li>
 <li><p>Start Matlab.</p></li>
+<li><p>[<em>Optional: see bullet point below</em>] Make sure that you have a suitable compiler for using the Matlab mex function. (Check the output of <code>mex -setup</code>.) Then compile the MEX functions using the compile_mex function in <code>controlcont\rtc\matlab</code>.</p>
+<ul>
+<li><p>If you are using a regular 64 bit installation of Windows and Matlab, there are compiled MEX files ready for use in the repository and so you don't need to do this unless they don't work.</p></li>
+<li><p>A suitable (free) compiler is Microsoft Visual Studio Community Edition.</p></li>
+</ul></li>
 <li><p>Add <code>controlcont\rtc\matlab</code> to the Matlab path (<code>help addpath</code>).</p></li>
 <li><p>Add the appropriate rig directory to the Matlab path, e.g., <code>controlcont\rtc\rigs\duffing_numerical</code>.</p></li>
 <li><p>Create the interface to the controller with</p>
@@ -91,20 +95,16 @@ make</code></pre></li>
 <li><p>Time series data can be collected through the use of streams; see the help for <code>rtc.set_stream</code>, <code>rtc.run_stream</code>.</p>
 <ul>
 <li><p>By default, 5 different streams (0-4) are available for use.</p></li>
-<li><p>The maximum amount of data a stream can return is around 8 MB.</p></li>
+<li><p>The maximum amount of data a stream can return is around 8 MB. If too much data is requested, the stream recording will refuse to start.</p></li>
 </ul></li>
 </ol>
 <p>Note: this assumes that a rig specific interface is used to set default parameters. This is not necessary and the generic rtc_interface can be used instead if desired.</p>
 <h2 id="to-use-the-real-time-controller-in-python-2.x-or-3.x">To use the real-time controller in Python (2.x or 3.x)</h2>
 <ol style="list-style-type: decimal">
-<li><p>Ensure that python-libusb1 and numpy are installed for your Python distribution.</p>
+<li><p>[<em>Optional: see bullet point below</em>] Download the &quot;Latest Windows binaries&quot; from <a href="http://libusb.info">http://libusb.info</a> and extract <code>libusb-1.0.dll</code> from either the MS32 or the MS64 directory depending on whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and Matlab). Put it in the <code>rtc\python</code> folder alongside <code>rtc_interface.py</code>.</p>
 <ul>
-<li><p>Numpy is available from <a href="http://www.lfd.uci.edu/~gohlke/pythonlibs/">http://www.lfd.uci.edu/~gohlke/pythonlibs/</a></p></li>
-<li><p>python-libusb1 is available using pip</p>
-<pre><code>pip install python-libusb1</code></pre></li>
-<li><p>The python-libusb1 files usb1.py and libusb1.py are included for convenience and, as such, a separate installation of python-libusb1 is not needed.</p></li>
+<li>If you are using a regular 64 bit installation of Windows, there is a copy of libusb-1.0.dll already included in the repository and so you don't need to do this.</li>
 </ul></li>
-<li><p>Download the &quot;Latest Windows binaries&quot; from <a href="http://libusb.info">http://libusb.info</a> and extract <code>libusb-1.0.dll</code> from either the MS32 or the MS64 directory depending on whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and Matlab). Put it in the <code>rtc\python</code> folder alongside <code>rtc_interface.py</code>. (Keep the filename as <code>libusb-1.0.dll</code>.)</p></li>
 <li><p>Start Python.</p></li>
 <li><p>Import the Python module and create the interface to the controller with</p>
 <pre><code>import rtc_interface
@@ -113,7 +113,7 @@ rtc = rtc_interface.rtc_interface()</code></pre></li>
 <li><p>Time series data can be collected through the use of streams; see the help for <code>rtc.set_stream</code>, <code>rtc.run_stream</code>.</p>
 <ul>
 <li><p>By default, 5 different streams (0-4) are available for use.</p></li>
-<li><p>The maximum amount of data a stream can return is around 8 MB.</p></li>
+<li><p>The maximum amount of data a stream can return is around 8 MB. If too much data is requested, the stream recording will refuse to start.</p></li>
 </ul></li>
 </ol>
 <p>Note: if desired, rig specific interfaces for Python can be created in much the same way as for Matlab.</p>

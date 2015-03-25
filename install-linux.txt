@@ -101,7 +101,8 @@ To use the real-time controller in Matlab
 -----------------------------------------
 
 1. Make sure that you have a suitable compiler for using the Matlab mex
-   function. (Check the output of `mex -setup`.)
+   function. (Check the output of `mex -setup`.) Then compile the MEX functions
+   using the compile_mex function in `controlcont/rtc/matlab`.
 
     * A suitable (free) compiler is gcc which is installable via your system
       package manager.
@@ -125,7 +126,8 @@ To use the real-time controller in Matlab
 
     * By default, 5 different streams (0-4) are available for use.
 
-    * The maximum amount of data a stream can return is around 8 MB.
+    * The maximum amount of data a stream can return is around 8 MB. If too much
+      data is requested, the stream recording will refuse to start.
 
 Note: this assumes that a rig specific interface is used to set default
 parameters. This is not necessary and the generic rtc_interface can be used
@@ -135,35 +137,23 @@ instead if desired.
 To use the real-time controller in Python (2.x or 3.x)
 ------------------------------------------------------
 
-1. Ensure that python-libusb1 and numpy are installed for your Python
-   distribution.
+1. Start Python.
 
-    * Numpy is available via most Linux package managers
-
-    * python-libusb1 is available via some Linux package managers or using pip
-
-            pip install python-libusb1
-
-    * The python-libusb1 files usb1.py and libusb1.py are included for
-      convenience and, as such, a separate installation of python-libusb1 is not
-      needed.
-
-2. Start Python.
-
-3. Import the Python module and create the interface to the controller with
+2. Import the Python module and create the interface to the controller with
 
         import rtc_interface
 		rtc = rtc_interface.rtc_interface()
 
-4. All the controller parameters are available through
+3. All the controller parameters are available through
    `rtc.par.<variable name>`.
 
-5. Time series data can be collected through the use of streams; see the help
+4. Time series data can be collected through the use of streams; see the help
    for `rtc.set_stream`, `rtc.run_stream`.
 
     * By default, 5 different streams (0-4) are available for use.
 
-    * The maximum amount of data a stream can return is around 8 MB.
+    * The maximum amount of data a stream can return is around 8 MB. If too much
+      data is requested, the stream recording will refuse to start.
 
 Note: if desired, rig specific interfaces for Python can be created in much the
 same way as for Matlab.

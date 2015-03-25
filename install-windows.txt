@@ -140,18 +140,28 @@ Device drivers for the USB interface to the real-time controller
 To use the real-time controller in Matlab
 -----------------------------------------
 
-1. Download the "Latest Windows binaries" from <http://libusb.info> and extract
-   `libusb-1.0.dll` from either the MS32 or the MS64 directory depending on
-   whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and
-   Matlab). Rename it as `libusb.dll` and put it in the `rtc\matlab` folder
+1. [_Optional: see bullet point below_] Download the "Latest Windows binaries"
+   from <http://libusb.info> and extract `libusb-1.0.dll` from either the MS32
+   or the MS64 directory depending on whether you are using 32 bit Windows (and
+   Matlab) or 64 bit Windows (and Matlab). Put it in the `rtc\matlab` folder
    alongside `rtc_interface.m`.
 
-2. Make sure that you have a suitable compiler for using the Matlab mex
-   function. (Check the output of `mex -setup`.)
+    * If you are using a regular 64 bit installation of Windows, there is a copy
+      of libusb-1.0.dll already included in the repository and so you don't need
+      to do this.
+
+2. Start Matlab.
+
+3. [_Optional: see bullet point below_] Make sure that you have a suitable
+   compiler for using the Matlab mex function. (Check the output of
+   `mex -setup`.) Then compile the MEX functions using the compile_mex function
+   in `controlcont\rtc\matlab`.
+
+    * If you are using a regular 64 bit installation of Windows and Matlab,
+      there are compiled MEX files ready for use in the repository and so you
+      don't need to do this unless they don't work.
 
     * A suitable (free) compiler is Microsoft Visual Studio Community Edition.
-
-3. Start Matlab.
 
 4. Add `controlcont\rtc\matlab` to the Matlab path (`help addpath`).
 
@@ -170,7 +180,8 @@ To use the real-time controller in Matlab
 
     * By default, 5 different streams (0-4) are available for use.
 
-    * The maximum amount of data a stream can return is around 8 MB.
+    * The maximum amount of data a stream can return is around 8 MB. If too much
+      data is requested, the stream recording will refuse to start.
 
 Note: this assumes that a rig specific interface is used to set default
 parameters. This is not necessary and the generic rtc_interface can be used
@@ -180,26 +191,17 @@ instead if desired.
 To use the real-time controller in Python (2.x or 3.x)
 ------------------------------------------------------
 
-1. Ensure that python-libusb1 and numpy are installed for your Python
-   distribution.
+1. [_Optional: see bullet point below_] Download the "Latest Windows binaries"
+   from <http://libusb.info> and extract `libusb-1.0.dll` from either the MS32
+   or the MS64 directory depending on whether you are using 32 bit Windows (and
+   Matlab) or 64 bit Windows (and Matlab). Put it in the `rtc\python` folder
+   alongside `rtc_interface.py`.
 
-    * Numpy is available from <http://www.lfd.uci.edu/~gohlke/pythonlibs/>
+    * If you are using a regular 64 bit installation of Windows, there is a copy
+      of libusb-1.0.dll already included in the repository and so you don't need
+      to do this.
 
-    * python-libusb1 is available using pip
-
-            pip install python-libusb1
-
-	* The python-libusb1 files usb1.py and libusb1.py are included for
-      convenience and, as such, a separate installation of python-libusb1 is not
-      needed.
-
-2. Download the "Latest Windows binaries" from <http://libusb.info> and extract
-   `libusb-1.0.dll` from either the MS32 or the MS64 directory depending on
-   whether you are using 32 bit Windows (and Matlab) or 64 bit Windows (and
-   Matlab). Put it in the `rtc\python` folder alongside
-   `rtc_interface.py`. (Keep the filename as `libusb-1.0.dll`.)
-
-3. Start Python.
+2. Start Python.
 
 4. Import the Python module and create the interface to the controller with
 
@@ -214,7 +216,8 @@ To use the real-time controller in Python (2.x or 3.x)
 
     * By default, 5 different streams (0-4) are available for use.
 
-    * The maximum amount of data a stream can return is around 8 MB.
+    * The maximum amount of data a stream can return is around 8 MB. If too much
+      data is requested, the stream recording will refuse to start.
 
 Note: if desired, rig specific interfaces for Python can be created in much the
 same way as for Matlab.
