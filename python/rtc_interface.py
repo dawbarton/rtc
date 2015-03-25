@@ -396,4 +396,4 @@ class rtc_interface(object):
             raise rtc_exception("Stream not already started")
         while self.get_par(stream_name + "state") == STREAM_STATE_ACTIVE:
             sleep(wait_period)
-        return self.get_stream(stream, struct)
+        return self.get_stream(stream)
