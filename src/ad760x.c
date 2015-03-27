@@ -306,9 +306,9 @@ void ad760xSetupPWM(unsigned int period)
     /* Perform the necessary configurations for DMTimer6 */
     DMTimerDisable(SOC_DMTIMER_6_REGS);
     DMTimerPreScalerClkDisable(SOC_DMTIMER_6_REGS);
-    DMTimerCounterSet(SOC_DMTIMER_6_REGS, 0xFFFFFFFFu - period);
-    DMTimerReloadSet(SOC_DMTIMER_6_REGS, 0xFFFFFFFFu - period);
-    DMTimerCompareSet(SOC_DMTIMER_6_REGS, 0xFFFFFFFFu - period/2);
+    DMTimerCounterSet(SOC_DMTIMER_6_REGS, 0u - period);
+    DMTimerReloadSet(SOC_DMTIMER_6_REGS, 0u - period);
+    DMTimerCompareSet(SOC_DMTIMER_6_REGS, 0u - period/2);
     DMTimerModeConfigure(SOC_DMTIMER_6_REGS, DMTIMER_AUTORLD_CMP_ENABLE);
     DMTimerPWMConfigure(SOC_DMTIMER_6_REGS, DMTIMER_PWM_PT_TOGGLE | DMTIMER_PWM_TRG_OVERFLOW_MATCH);
 }

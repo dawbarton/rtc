@@ -45,9 +45,6 @@
 #endif
 #define TIMER_PERIOD                    (TIMER_MASTER_FREQ/TIMER_FREQ)
 #define TIMER_PERIOD_FLOAT              (1.0f/TIMER_FREQ)
-#define TIMER_INITIAL_COUNT             (TIMER_OVERFLOW - TIMER_PERIOD)
-#define TIMER_CMP_COUNT                 (TIMER_OVERFLOW - TIMER_PERIOD/2)
-#define TIMER_RLD_COUNT                 (TIMER_INITIAL_COUNT)
 
 /* Set to one when the user code has finished executing */
 extern volatile unsigned int rtc_user_finished;
