@@ -181,9 +181,9 @@ void rtc_set_output(unsigned int channel, float value)
 	if (channel >= 4)
 		return;
 	switch (channel) {
-		/* Channels 1 & 2 are bipolar outputs */
+		/* Channels 1 & 3 are bipolar outputs */
 		case 0:
-		case 1:
+		case 2:
 			if (value < -OUTPUT_VOLTAGE)
 				value = -OUTPUT_VOLTAGE;
 			else if (value > OUTPUT_VOLTAGE)
@@ -191,8 +191,8 @@ void rtc_set_output(unsigned int channel, float value)
 			out_volt[channel] = value;
 			ad5064SetOutput(channel, (unsigned int)((value + OUTPUT_VOLTAGE)*(((float)0xFFFF)/(2*OUTPUT_VOLTAGE))));
 			break;
-		/* Channels 3 & 4 are unipolar outputs */
-		case 2:
+		/* Channels 2 & 4 are unipolar outputs */
+		case 1:
 		case 3:
 			if (value < 0)
 				value = 0;
