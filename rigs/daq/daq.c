@@ -60,76 +60,25 @@
 #include "rtc_main.h"
 #include "rtc_util.h"
 #include "rtc_user.h"
-#include "neon_mathfun.h"
-#include <string.h>
 
-/* ********************************************************************** 
-	Defines
-   ********************************************************************** */
-#define M_PI   3.141592654f  /* pi */
-#define M_2PI  6.283185307f  /* 2*pi */
+/* ************************************************************************ */
+/* * Defines ************************************************************** */
+/* ************************************************************************ */
 
-#define M_PI_2 1.570796327f  /* pi/2 */
-#define M_PI_4 0.785398163f  /* pi/4 */
 
-#define M_1_PI 0.318309886f  /* 1/pi */
-#define M_2_PI 0.159154943f  /* 1/(2*pi) */
+/* ********************************************************************** */
+/* * Types ************************************************************** */
+/* ********************************************************************** */
 
-#define N_FOURIER_MODES 7  /* N_FOURIER_MODES + 1 must be a multiple of 4 */
-#define N_FOURIER_COEFF (2*N_FOURIER_MODES + 2)  /* one will always be zero but it's easier/quicker than handling the special case */
-#define N_FOURIER_VEC (N_FOURIER_COEFF/4)
 
-#define INPUT_FILTER_ORDER 2
-#define INPUT_FILTER_N_STATE (2*INPUT_FILTER_ORDER)
-#define RAND_FILTER_ORDER 3
-#define RAND_FILTER_N_STATE (2*RAND_FILTER_ORDER)
-
-/* ********************************************************************** 
-	Types
-   ********************************************************************** */
-struct biquad_filter_t {
-	int order;
-	float a[2];
-	float b[3];
-};
-
-/* ********************************************************************** 
-	Globals (internal)
-   ********************************************************************** */
-static float time_mod_2pi;
-static float time_delta;
-static float period_start;  /* signal the start of a new period */
-static unsigned int output_channel;  /* DAC output channel */
-
-/* Forcing parameters */
-static float forcing_freq;
-static float forcing;
-static float forcing_coeffs[N_FOURIER_COEFF] MEM_ALIGN;  /* Fourier coeffs of the forcing */
-
-/* Fourier calculations */
-static float sinusoid_f[N_FOURIER_COEFF] MEM_ALIGN;  /* [sin(0*t), sin(1*t), sin(2*t), ..., cos(0*t), cos(1*t), cos(2*t), ...] */
-
-/* Variables relating to the output */
-static float out;
-
-/* Variables relating to the random input */
-static float rand_ampl;  /* amplitude of random input to the control x_target */
-static unsigned int rand_seed_w;  /* must not be zero, nor 0x464fffff */
-static unsigned int rand_seed_z;  /* must not be zero, nor 0x9068ffff */
-static float rand_filter_freq;
-static struct biquad_filter_t rand_filter;
-static float rand_filter_state[2*RAND_FILTER_ORDER];
+/* ********************************************************************** */
+/* * Globals (internal) ************************************************* */
+/* ********************************************************************** */
 
 
 /* ************************************************************************ */
 /* * Internal prototypes ************************************************** */
 /* ************************************************************************ */
-void calc_sinusoids();
-float biquad_filter(float x, const struct biquad_filter_t *filter, float state[]);
-void update_filter(struct biquad_filter_t *filter, float freq);
-void update_rand_filter(void *new_value, void *trigger_data);
-float inv_tan_pi(float x);
-unsigned int get_random();
 
 
 /* ************************************************************************ */
@@ -137,162 +86,22 @@ unsigned int get_random();
 /* ************************************************************************ */
 void rtc_user_init(void)
 {
-	/* initialise time and other fundamental stuff */
-	time_mod_2pi = 0.0f; rtc_data_add_par("time_mod_2pi", &time_mod_2pi, RTC_TYPE_FLOAT, sizeof(time_mod_2pi), NULL, NULL);
-	time_delta = M_2PI/TIMER_FREQ;
-	period_start = 1;
-	output_channel = 0; rtc_data_add_par("output_channel", &output_channel, RTC_TYPE_UINT32, sizeof(output_channel), NULL, NULL);
-
-	/* forcing parameters */
-	forcing_freq = 1.0f; rtc_data_add_par("forcing_freq", &forcing_freq, RTC_TYPE_FLOAT, sizeof(forcing_freq), NULL, NULL);
-	forcing = 0.0f; rtc_data_add_par("forcing", &forcing, RTC_TYPE_FLOAT, sizeof(forcing), NULL, NULL);
-	memset(forcing_coeffs, 0, sizeof(forcing_coeffs)); rtc_data_add_par("forcing_coeffs", &forcing_coeffs, RTC_TYPE_FLOAT, sizeof(forcing_coeffs), NULL, NULL);
-	rtc_data_add_par("forcing_amp", &(forcing_coeffs[1]), RTC_TYPE_FLOAT, sizeof(forcing_coeffs[1]), NULL, NULL);
-
-	/* variables relating to the output */
-	out = 0.0f; rtc_data_add_par("out", &out, RTC_TYPE_FLOAT, sizeof(out), NULL, NULL);
-
-	/* variables relating to the random input */
-	rand_ampl = 0.0f; rtc_data_add_par("rand_ampl", &rand_ampl, RTC_TYPE_FLOAT, sizeof(rand_ampl), NULL, NULL);
-	rand_seed_w = 0x70123413; rtc_data_add_par("rand_seed_w", &rand_seed_w, RTC_TYPE_UINT32, sizeof(rand_seed_w), NULL, NULL);
-	rand_seed_z = 0x10300013; rtc_data_add_par("rand_seed_z", &rand_seed_z, RTC_TYPE_UINT32, sizeof(rand_seed_z), NULL, NULL);
-	rand_filter_freq = 0.01f; rtc_data_add_par("rand_filter_freq", &rand_filter_freq, RTC_TYPE_FLOAT, sizeof(rand_filter_freq), NULL, NULL);
-	memset(&rand_filter, 0, sizeof(rand_filter));
-	memset(rand_filter_state, 0, sizeof(rand_filter_state));
-
-	/* set up the filters */
-	update_filter(&rand_filter, rand_filter_freq);
-	rand_filter.order = RAND_FILTER_ORDER;
 }
 
 /* ************************************************************************ */
 void rtc_user_main(void)
 {
 	static int led = 0;
-	int i;
-
-	/* ********************************************************************** */
-	/*  Pre-calculations */
-	/* ********************************************************************** */
-
-	/* calculate sinusoids for use in the Fourier calculations */
-	calc_sinusoids();
-
-	/* calculate the output */
-	out = biquad_filter(rand_ampl*((float)get_random()/(float)0x7FFFFFFF - 1.0f), &rand_filter, rand_filter_state);
-	for (i = 0; i < N_FOURIER_COEFF; i++)
-		out += sinusoid_f[i]*forcing_coeffs[i];
-
-	/* output the calculated value */
-	rtc_set_output(output_channel, out);
+	static unsigned int time = 0;
 
 	/* ********************************************************************** */
 	/*  Update time */
 	/* ********************************************************************** */
 
-	period_start = 0;
-	time_mod_2pi += time_delta*forcing_freq;
-	if (time_mod_2pi > M_2PI) {
-		time_mod_2pi -= M_2PI;
+	time += 1;
+	if (time == SAMPLE_FREQ) {
+		time = 0;
 		rtc_led(2, led);
 		led = !led;
-		period_start = 1;
-	}
-}
-
-/* ********************************************************************** 
-	Calculate sinusoids
-   ********************************************************************** */
-void calc_sinusoids()
-{
-	int i;
-	v4sf t MEM_ALIGN, sine MEM_ALIGN, cosine MEM_ALIGN;
-	float tt[4] MEM_ALIGN = {0.0f, 1.0f, 2.0f, 3.0f};
-
-	t = vld1q_f32(tt);
-	t = vmulq_f32(t, vdupq_n_f32(time_mod_2pi));
-	sincos_ps(t, &sine, &cosine);
-	vst1q_f32(&sinusoid_f[0], sine);
-	vst1q_f32(&sinusoid_f[N_FOURIER_COEFF/2], cosine);
-
-	for (i = 1; i < N_FOURIER_COEFF/8; i++) {
-		t = vaddq_f32(t, vdupq_n_f32(4.0f*time_mod_2pi));
-		sincos_ps(t, &sine, &cosine);
-		vst1q_f32(&sinusoid_f[4*i], sine);
-		vst1q_f32(&sinusoid_f[4*i + N_FOURIER_COEFF/2], cosine);
-	}
-}
-
-/* ********************************************************************** 
-	A biquad filter
-   ********************************************************************** */
-float biquad_filter(float x, const struct biquad_filter_t *filter, float state[])
-{
-	int i;
-	float y = x;
-	for (i = 0; i < filter->order; i++) {
-		float w = y + filter->a[0]*state[2*i+0] + filter->a[1]*state[2*i+1];
-		y = filter->b[0]*w + filter->b[1]*state[2*i+0] + filter->b[2]*state[2*i+1];
-		state[2*i+1] = state[2*i+0];
-		state[2*i+0] = w;
-	}
-	return y;
-}
-
-/* ********************************************************************** 
-	Random number generation
-   ********************************************************************** */
-unsigned int get_random()
-{
-	rand_seed_z = 36969 * (rand_seed_z & 65535) + (rand_seed_z >> 16);
-	rand_seed_w = 18000 * (rand_seed_w & 65535) + (rand_seed_w >> 16);
-	return (rand_seed_z << 16) + rand_seed_w;  /* 32-bit result */
-}
-
-/* ********************************************************************** 
-	Calculate 1/tan(pi*x)
-   ********************************************************************** */
-float inv_tan_pi(float x)
-{
-	v4sf t MEM_ALIGN, sine MEM_ALIGN, cosine MEM_ALIGN;
-	float tt[4] MEM_ALIGN, sine_f[4] MEM_ALIGN, cosine_f[4] MEM_ALIGN;
-
-	tt[0] = x; tt[1] = 0.0f; tt[2] = 0.0f; tt[3] = 0.0f;
-	t = vld1q_f32(tt);
-	t = vmulq_f32(t, vdupq_n_f32(M_PI));
-	sincos_ps(t, &sine, &cosine);
-	vst1q_f32(sine_f, sine);
-	vst1q_f32(cosine_f, cosine);
-	return (cosine_f[0]/sine_f[0]);
-}
-
-/* ********************************************************************** 
-	Calculate the Butterworth filter coefficients for a normalised
-	frequency value (0 < freq < 1)
-   ********************************************************************** */
-void update_filter(struct biquad_filter_t *filter, float freq)
-{
-	float ita, q = 1.414213562f, b0;
-	/* Check that the filter cut off is between 0 and 1 */
-	if ((freq < 0.0f) || (freq >= 1.0f))
-		freq = 0.01f; /* default value */
-	ita = inv_tan_pi(freq);
-	b0 = 1.0f / (1.0f + q*ita + ita*ita);
-	filter->a[0] = 2.0f*(ita*ita - 1.0f)*b0;
-	filter->a[1] = -(1.0f - q*ita + ita*ita)*b0;
-	filter->b[0] = b0;
-	filter->b[1] = 2.0f*b0;
-	filter->b[2] = b0;
-}
-
-/* ********************************************************************** 
-	Update the coefficients of the random number filter
-   ********************************************************************** */
-void update_rand_filter(void *new_value, void *trigger_data)
-{
-	float freq = *(float *)new_value;
-	if ((freq > 0.0f) && (freq <= 1.0f)) {
-		rand_filter_freq = freq;
-		update_filter(&rand_filter, freq);
 	}
 }
