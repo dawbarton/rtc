@@ -1,0 +1,47 @@
+Installing on a new Beaglebone Black
+====================================
+
+The latest versions of the Beaglebone Black come with a version of
+Debian. Moreover, the version of uBoot that is used with Debian seems to be
+incompatible with Starterware (on which this software is based). The easiest
+solution to this is to simply downgrade the software on the Beaglebone Black to
+the Angstrom Distribution available from <http://beagleboard.org/latest-images>
+or more directly from
+<https://s3.amazonaws.com/angstrom/demo/beaglebone/BBB-eMMC-flasher-2013.09.04.img.xz>.
+
+Put this image on a suitable micro-SD card (see the Beagleboard getting started
+web pages) and place it in the Beaglebone Black. Hold down the button "S3 Power"
+as you power up the device (hold for 10 sec or so) so that the Beaglebone boots
+from the SD card rather than internal memory. Leave the Beaglebone for 30
+minutes to an hour for the Angstrom Distribution to be installed.
+
+Once Angstrom has been installed, reboot the Beaglebone and then edit the
+uEnv.txt on it to contain the line
+
+uenvcmd=mmcinfo;fatload mmc 0 0x80000000 app.bin; go 0x80000000
+
+Reboot again and the Beaglebone will try to load the file called app.bin from
+the SD card - this is the code you generate here.
+
+
+Connecting to the Beaglebone Black via serial cable
+===================================================
+
+The Kermit (C-Kermit) program can be used to connect to the Beaglebone Black
+using the UART-USB connection (buy a suitable FTDI cable). The settings needed
+are
+
+set line /dev/ttyUSB0
+set speed 115200
+set carrier-watch off
+set handshake none
+set flow-control none
+set prompt "Kermit> "
+
+These can be put in manually or into ~/.kermrc
+
+The advantage of the Kermit program (over, say, screen) is that it can be used
+to send files to the board with the send command. Also, it makes use of the
+terminal paging (i.e., it doesn't just keep 24 lines of output!).
+
+There are other terminals that can be used with the same settings.
