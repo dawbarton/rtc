@@ -33,7 +33,7 @@
 ** converter.
 **
 ** Usage assumptions/notes:
-**   1) Conversion start can be either triggered manually using the 
+**   1) Conversion start can be either triggered manually using the
 **      ad760xCaptureStart function or via setting up pulse-width modulation
 **      via the DMTimer module.
 **   2) Getting the data from the device occurs automatically via interrupts.
@@ -65,7 +65,7 @@
 #include "rtc_user.h"
 
 #include "uartStdio.h"
-#include "consoleUtils.h"   
+#include "consoleUtils.h"
 
 #define AD760X_SPI_CHANNEL 0
 #define MCSPI_IN_CLK 48000000
@@ -181,7 +181,7 @@ void ad760xSetup(void)
 
     /* Perform the necessary configuration for master mode */
     /* MCSPI_DATA_LINE_COMM_MODE_7 = D0 & D1 disabled for output, receive on D1 */
-    McSPIMasterModeConfig(SOC_SPI_1_REGS, MCSPI_SINGLE_CH, 
+    McSPIMasterModeConfig(SOC_SPI_1_REGS, MCSPI_SINGLE_CH,
                           MCSPI_RX_ONLY_MODE, MCSPI_DATA_LINE_COMM_MODE_7,
                           AD760X_SPI_CHANNEL);
 
@@ -189,9 +189,9 @@ void ad760xSetup(void)
     HWREG(SOC_SPI_1_REGS + MCSPI_SYST) |= (1 << 9);
 
     /* Configure the McSPI bus clock depending on clock mode */
-    /* MCSPI_CLK_MODE_2: AD760X loads data on rising clk edge, read it on the falling 
+    /* MCSPI_CLK_MODE_2: AD760X loads data on rising clk edge, read it on the falling
        clock edge; the first bit is loaded when CS goes low */
-    McSPIClkConfig(SOC_SPI_1_REGS, MCSPI_IN_CLK, MCSPI_OUT_FREQ, AD760X_SPI_CHANNEL, 
+    McSPIClkConfig(SOC_SPI_1_REGS, MCSPI_IN_CLK, MCSPI_OUT_FREQ, AD760X_SPI_CHANNEL,
                    MCSPI_CLK_MODE_2);
 
     /* Configure the word length */
@@ -224,7 +224,7 @@ void ad760xSetup(void)
     GPIOPinMuxSetup(CONVST_PIN_MUX, PAD_FS_RXD_NA_PUPDD(7));
     GPIOPinMuxSetup(RESET_PIN_MUX,  PAD_FS_RXD_NA_PUPDD(7));
     GPIOPinMuxSetup(BUSY_PIN_MUX,   PAD_FS_RXE_PD_PUPDE(7));
-    
+
     /* Pin directions */
     GPIODirModeSet(OS0_REGS,    OS0_PIN,    GPIO_DIR_OUTPUT);
     GPIODirModeSet(OS1_REGS,    OS1_PIN,    GPIO_DIR_OUTPUT);
@@ -286,7 +286,7 @@ void ad760xSetup(void)
     /* Reset the AD760X */
     ad760xReset();
 
-    DEBUGPRINT("\t+ AD760x: device reset\r\n");  
+    DEBUGPRINT("\t+ AD760x: device reset\r\n");
 
     /* Enable the interrupt for the busy signal */
     GPIOPinIntEnable(BUSY_REGS, GPIO_INT_LINE_1, BUSY_PIN);
@@ -317,14 +317,14 @@ void ad760xSetupPWM(unsigned int period)
 void ad760xEnablePWM()
 {
     /* Enable the timer */
-    DMTimerEnable(SOC_DMTIMER_6_REGS);  
+    DMTimerEnable(SOC_DMTIMER_6_REGS);
 }
 
 /* ************************************************************************ */
 void ad760xDisablePWM()
 {
     /* Enable the timer */
-    DMTimerDisable(SOC_DMTIMER_6_REGS);  
+    DMTimerDisable(SOC_DMTIMER_6_REGS);
 }
 
 /* ************************************************************************ */
@@ -346,6 +346,8 @@ void ad760xReset(void)
 /* ************************************************************************ */
 void ad760xCaptureStart(void)
 {
+    /* This function is not used when CONVST is driven by a DMTimer */
+
     /* Reset the buffer status */
     ad760xBufferReady = 0;
 
@@ -359,7 +361,7 @@ void ad760xCaptureGet(void)
     /* Set the number of words to transfer */
     McSPIWordCountSet(SOC_SPI_1_REGS, AD760X_CHANNEL_COUNT);
 
-    /* Enable the Tx and End-of-word-count interrupts of McSPI */
+    /* Enable the Tx/Rx and End-of-word-count interrupts of McSPI */
     McSPIIntEnable(SOC_SPI_1_REGS, MCSPI_INT_TX_EMPTY(AD760X_SPI_CHANNEL) | MCSPI_INT_RX_FULL(AD760X_SPI_CHANNEL) | MCSPI_INT_EOWKE);
 
     /* SPIEN (CS) line is forced to low state */
@@ -375,6 +377,7 @@ void ad760xMcSPIIsr(void)
     unsigned int intCode, i, j;
 
     intCode = McSPIIntStatusGet(SOC_SPI_1_REGS);
+    ad760xBufferReady = 0;
 
     while(intCode) {
 
@@ -408,6 +411,9 @@ void ad760xMcSPIIsr(void)
             /* Disable interrupts */
             McSPIIntDisable(SOC_SPI_1_REGS, MCSPI_INT_TX_EMPTY(AD760X_SPI_CHANNEL) | MCSPI_INT_RX_FULL(AD760X_SPI_CHANNEL) | MCSPI_INT_EOWKE);
 
+            /* Signal data ready */
+            ad760xBufferReady = 1;
+
         }
 
         /* Check for end-of-word-count */
@@ -420,6 +426,11 @@ void ad760xMcSPIIsr(void)
 
         intCode = McSPIIntStatusGet(SOC_SPI_1_REGS);
     }
+
+    /* Call the data handler if necessary */
+    if (ad760xBufferReady && (ad760xDataHandler != NULL))
+        ad760xDataHandler();
+
 }
 
 /* ************************************************************************ */
@@ -437,12 +448,6 @@ void ad760xGPIOIsr(void)
         /* Get the data */
         ad760xCaptureGet();
 
-        /* Signal data ready */
-        ad760xBufferReady = 1;
-
-        /* Call the data handler if necessary */
-        if (ad760xDataHandler != NULL)
-            ad760xDataHandler();
     }
 }
 
