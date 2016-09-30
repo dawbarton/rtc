@@ -101,6 +101,7 @@ void rtc_user_init_handler(void)
 	rtc_data_add_par("aksim_buffer", &aksimBuffer, RTC_TYPE_UINT32, sizeof(aksimBuffer), NULL, NULL);
 	rtc_data_add_par("aksim_status", &aksimStatus, RTC_TYPE_UINT32, sizeof(aksimStatus), NULL, NULL);
 	rtc_data_add_par("aksim_angle", &aksimAngle, RTC_TYPE_FLOAT, sizeof(aksimAngle), NULL, NULL);
+	rtc_data_add_par("aksim_crc_err", &aksimCRCError, RTC_TYPE_UINT32, sizeof(aksimCRCError), NULL, NULL);
 	rtc_user_finished = 0;
 	rtc_user_init();
 }

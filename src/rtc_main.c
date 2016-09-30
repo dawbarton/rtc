@@ -42,7 +42,7 @@
 #include "usb_setup.h"
 #include "gpio_setup.h"
 #include "ad760x.h"
-#include "ad5064.h"
+#include "aksim.h"
 
 #include "consoleUtils.h"
 
@@ -204,6 +204,13 @@ void initialise(void)
         ad760xSetOverSample(AD760X_OVERSAMPLE_64);
 
     ConsoleUtilsPrintf("\t+ AD760x done\r\n");
+
+    /* ******************************************************************** */
+    /* * AD760x *********************************************************** */
+    /* ******************************************************************** */
+
+    aksimSetup();
+    ConsoleUtilsPrintf("\t+ AksIM done\r\n");
 
     /* ******************************************************************** */
     /* * Done ************************************************************* */
