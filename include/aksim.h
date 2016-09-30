@@ -42,6 +42,9 @@ extern volatile unsigned int aksimBufferReady;
 /* Status from the AksIM */
 extern volatile unsigned int aksimStatus;
 
+/* True is there has been a CRC error in the data */
+extern volatile unsigned int aksimCRCError;
+
 /* Set up GPIOs, McSPI and delay timer needed for AD760X operation */
 void aksimSetup(void);
 
