@@ -36,6 +36,7 @@
 #include "rtc_data.h"
 #include "ad760x.h"
 #include "ad5064.h"
+#include "aksim.h"
 #include "interrupt.h"
 
 #define OUTPUT_VOLTAGE 4.096f
@@ -56,6 +57,7 @@ static volatile unsigned int rtc_last_time;
 volatile unsigned int rtc_user_finished;
 volatile float in_volt[AD760X_CHANNEL_COUNT];
 volatile float out_volt[4];
+volatile float aksimAngle;
 
 /* ************************************************************************ */
 /* * Internal prototypes ************************************************** */
@@ -69,7 +71,8 @@ void rtc_user_init_handler(void)
 {
 	char input_name[] = "I#volt";
 	int i;
-	ad760xDataHandler = rtc_user_main_handler;
+	ad760xDataHandler = aksimCaptureGet;
+	aksimDataHandler = rtc_user_main_handler;
 	rtc_data_add_par("firmware", &firmware, RTC_TYPE_CHAR, sizeof(firmware), rtc_data_trigger_read_only, NULL);
 	rtc_sample_freq = TIMER_FREQ;
 	rtc_data_add_par("sample_freq", &rtc_sample_freq, RTC_TYPE_UINT32, sizeof(unsigned int), rtc_data_trigger_read_only, NULL);
@@ -95,6 +98,9 @@ void rtc_user_init_handler(void)
 		input_name[1] = '0' + i;
 		rtc_data_add_par(input_name, &out_volt[i], RTC_TYPE_FLOAT, sizeof(float), rtc_data_trigger_read_only, NULL);
 	}
+	rtc_data_add_par("aksim_buffer", &aksimBuffer, RTC_TYPE_UINT32, sizeof(aksimBuffer), NULL, NULL);
+	rtc_data_add_par("aksim_status", &aksimStatus, RTC_TYPE_UINT32, sizeof(aksimStatus), NULL, NULL);
+	rtc_data_add_par("aksim_angle", &aksimAngle, RTC_TYPE_FLOAT, sizeof(aksimAngle), NULL, NULL);
 	rtc_user_finished = 0;
 	rtc_user_init();
 }
@@ -112,6 +118,7 @@ void rtc_user_main_handler(void)
 
 	/* Acknowledge data received */
 	ad760xBufferReady = 0;
+	aksimBufferReady = 0;
 
 	/* Check clock jitter - ignore the first n cycles for the CPU cache to kick in */
 	t1 = TIME;
@@ -127,6 +134,9 @@ void rtc_user_main_handler(void)
 	/* Calculate the actual voltages */
 	for (i = 0; i < AD760X_CHANNEL_COUNT; i++)
 		in_volt[i] = ((float)ad760xBuffer[i])*rtc_input_voltage_scale;
+
+	/* Calculate the actual angle */
+	aksimAngle = ((float)aksimBuffer)/(AKSIM_BIT_MASK + 1)*6.283185307f;
 
 	/* Call the user code */
 	rtc_user_main();
