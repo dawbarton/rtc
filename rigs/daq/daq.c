@@ -99,7 +99,7 @@ void rtc_user_main(void)
 	/* ********************************************************************** */
 
 	time += 1;
-	if (time == SAMPLE_FREQ) {
+	if (time >= SAMPLE_FREQ) {
 		time = 0;
 		rtc_led(2, led);
 		led = !led;
