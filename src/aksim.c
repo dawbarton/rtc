@@ -117,6 +117,20 @@ void aksimSetup(void)
     DEBUGPRINT("\t+ AksIM: done pin-muxing\r\n");
 
     /* ******************************************************************* */
+    /* McSPI: Sort out interrupts */
+
+    /* Register McSPIIsr interrupt handler */
+	IntRegister(SYS_INT_SPI0INT, aksimMcSPIIsr);
+
+	/* Set Interrupt Priority */
+	IntPrioritySet(SYS_INT_SPI0INT, 0, AINTC_HOSTINT_ROUTE_IRQ);
+
+    /* Enable system interrupt in AINTC */
+	IntSystemEnable(SYS_INT_SPI0INT);
+
+    DEBUGPRINT("\t+ AksIM: interrupts for McSPI registered and enabled\r\n");
+
+    /* ******************************************************************* */
     /* McSPI: Set up McSPI for this specific channel */
 
     /* Perform the necessary configuration for master mode */
@@ -225,6 +239,12 @@ void aksimMcSPIIsr(void)
             McSPIIntStatusClear(SOC_SPI_0_REGS, MCSPI_INT_EOWKE);
 
         }
+
+        /* Clear any extraneous interrupts for channel 0 */
+        if (MCSPI_INT_TX_EMPTY(0) == (intCode & MCSPI_INT_TX_EMPTY(0)))
+            McSPIIntStatusClear(SOC_SPI_0_REGS, MCSPI_INT_TX_EMPTY(0));
+        if (MCSPI_INT_TX_UNDERFLOW(0) == (intCode & MCSPI_INT_TX_UNDERFLOW(0)))
+            McSPIIntStatusClear(SOC_SPI_0_REGS, MCSPI_INT_TX_UNDERFLOW(0));
 
         intCode = McSPIIntStatusGet(SOC_SPI_0_REGS);
     }
