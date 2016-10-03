@@ -30,13 +30,13 @@
 ** ad5064.c
 **
 ** This unit implements an interface to an Analogue Devices AD5064 D/A
-** converter. The code below should be easy to modify to work with the 
+** converter. The code below should be easy to modify to work with the
 ** AD5044 and AD5024 as well.
 **
 ** Usage assumptions/notes:
 **   1) There is a 3 usec delay required between transmits; the transmit
-**      function simply blocks until enough time has passed. 
-**   2) Assumes there is enough space in the FIFO to send the required 
+**      function simply blocks until enough time has passed.
+**   2) Assumes there is enough space in the FIFO to send the required
 **      messages; the 3 usec delay should mean this assumption is always
 **      satisified.
 **   3) A free running timer is preconfigured.
@@ -134,7 +134,7 @@ void ad5064Setup(void)
 
     /* Perform the necessary configuration for master mode */
     /* MCSPI_DATA_LINE_COMM_MODE_6 = D0 enabled for output, D1 disabled for output, receive on D1 */
-    McSPIMasterModeConfig(SOC_SPI_0_REGS, MCSPI_MULTI_CH, 
+    McSPIMasterModeConfig(SOC_SPI_0_REGS, MCSPI_MULTI_CH,
                           MCSPI_TX_ONLY_MODE, MCSPI_DATA_LINE_COMM_MODE_6,
                           AD5064_SPI_CHANNEL);
 
@@ -143,7 +143,7 @@ void ad5064Setup(void)
 
     /* Configure the McSPI bus clock depending on clock mode */
     /* MCSPI_CLK_MODE_2: AD5064 reads data on the falling clock edge */
-    McSPIClkConfig(SOC_SPI_0_REGS, MCSPI_IN_CLK, MCSPI_OUT_FREQ, AD5064_SPI_CHANNEL, 
+    McSPIClkConfig(SOC_SPI_0_REGS, MCSPI_IN_CLK, MCSPI_OUT_FREQ, AD5064_SPI_CHANNEL,
                    MCSPI_CLK_MODE_2);
 
     /* Configure the word length */
@@ -155,33 +155,26 @@ void ad5064Setup(void)
     /* Disable the receiver FIFO of McSPI peripheral */
     McSPIRxFIFOConfig(SOC_SPI_0_REGS, MCSPI_RX_FIFO_DISABLE, AD5064_SPI_CHANNEL);
 
-    /* Enable the transmitter FIFO of McSPI peripheral */
-    McSPITxFIFOConfig(SOC_SPI_0_REGS, MCSPI_TX_FIFO_ENABLE, AD5064_SPI_CHANNEL);
-
-    /* Set the interrupt levels for the FIFO (zero isn't a valid input! 32 bit words = 4 bytes) */
-    /* The total FIFO size is 64 bytes, either entirely for TX/RX or split 50:50 */
-    /* Interrupt level must be a multiple of the (rounded up) word size */
-    /* Almost empty and almost full values determine the number of bytes that can be *put* into */
-    /* the transmit buffer and *read* from the receive buffer respectively */
-    McSPIFIFOTrigLvlSet(SOC_SPI_0_REGS, 64, 64, MCSPI_TX_ONLY_MODE);
+    /* Disable the transmitter FIFO of McSPI peripheral */
+    McSPITxFIFOConfig(SOC_SPI_0_REGS, MCSPI_TX_FIFO_DISABLE, AD5064_SPI_CHANNEL);
 
     /* Disable any send delays */
     McSPIInitDelayConfig(SOC_SPI_0_REGS, MCSPI_INITDLY_0);
-    
+
     /* Set the timing of the CS assertion to be minimal but allowable at 48 MHz */
     McSPICSTimeControlSet(SOC_SPI_0_REGS, MCSPI_CS_TCS_1PNT5_CLK, AD5064_SPI_CHANNEL);
 
     /* Enable the McSPI channel for communication - CS is automatically asserted in multi channel mode */
     McSPIChannelEnable(SOC_SPI_0_REGS, AD5064_SPI_CHANNEL);
 
-    
+
     /* ******************************************************************* */
     /* GPIOs: Set up GPIOs */
 
     /* Pin muxes for necessary pins */
     GPIOPinMuxSetup(LDAC_PIN_MUX,   PAD_FS_RXD_NA_PUPDD(7));
     GPIOPinMuxSetup(CLR_PIN_MUX,    PAD_FS_RXD_NA_PUPDD(7));
-    
+
     /* Pin directions */
     GPIODirModeSet(LDAC_REGS,   LDAC_PIN,   GPIO_DIR_OUTPUT);
     GPIODirModeSet(CLR_REGS,    CLR_PIN,    GPIO_DIR_OUTPUT);
@@ -222,12 +215,8 @@ void ad5064SetOutput(unsigned int channel, unsigned int value)
 void ad5064Transmit(unsigned int value)
 {
     static unsigned int last_transmit = 0;
-    /* Use 4 usec delay as 3 usec isn't always enough */    
+    /* Use 4 usec delay as 3 usec isn't always enough */
     while ((TIME - last_transmit) < (4*TIMER_1US));
-    /* 
-      It assumes that there is space in the FIFO! Probably not something 
-      to worry about...
-    */
     McSPITransmitData(SOC_SPI_0_REGS, value, AD5064_SPI_CHANNEL);
     last_transmit = TIME;
 }
