@@ -42,6 +42,7 @@
 #include "usb_setup.h"
 #include "gpio_setup.h"
 #include "ad760x.h"
+#include "ad5064.h"
 #include "aksim.h"
 
 #include "consoleUtils.h"
