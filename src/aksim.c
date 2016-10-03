@@ -56,12 +56,17 @@
 #include "uartStdio.h"
 #include "consoleUtils.h"
 
-#define AKSIM_SPI_CHANNEL 0
+#define AKSIM_SPI_CHANNEL 1
 #define AKSIM_BITS_PER_WORD 20
 #define AKSIM_BYTES_PER_WORD 4
 #define AKSIM_WORD_COUNT 2
 #define MCSPI_IN_CLK 48000000
 #define MCSPI_OUT_FREQ 3000000
+
+#define CS1_REGS SOC_GPIO_0_REGS
+#define CS1_PIN 13
+#define CS1_PIN_MUX GPIO_0_13
+
 
 volatile unsigned int aksimBuffer;
 volatile unsigned int aksimBufferReady;
@@ -96,55 +101,29 @@ void aksimSetup(void)
     aksimDataHandler = NULL;
 
     /* ******************************************************************* */
-    /* McSPI: Initialise clocks and do pin-muxing */
+    /* McSPI: Assume all initialisation done by the AD5064 code */
 
-    /* Enable the clocks for McSPI0 module.*/
-    McSPI0ModuleClkConfig();
+    DEBUGPRINT("\t+ AksIM: assuming McSPI initialised by AD5064\r\n");
 
-    DEBUGPRINT("\t+ AksIM: enabled clocks for SPI0\r\n");
+    /* Perform Pin-Muxing for CS1; since SPI0_CS1 isn't pinned out, do this via a GPIO */
+    GPIOPinMuxSetup(CS1_PIN_MUX, PAD_FS_RXD_NA_PUPDD(7));
 
-    /* Perform Pin-Muxing for SPI0 Instance: SPI is mode 0 of these pins */
-    GPIOPinMuxSetup(CONTROL_CONF_SPI0_SCLK, PAD_FS_RXE_NA_PUPDD(0));
-    GPIOPinMuxSetup(CONTROL_CONF_SPI0_D0,   PAD_FS_RXD_NA_PUPDD(0));
-    GPIOPinMuxSetup(CONTROL_CONF_SPI0_D1,   PAD_FS_RXE_PU_PUPDE(0));
-    GPIOPinMuxSetup(CONTROL_CONF_SPI0_CS0,  PAD_FS_RXD_NA_PUPDD(0));
+    /* Pin directions */
+    GPIODirModeSet(CS1_REGS, CS1_PIN, GPIO_DIR_OUTPUT);
+
+    /* Set default outputs */
+    GPIOPinWrite(CS1_REGS, CS1_PIN, GPIO_PIN_HIGH);
 
     DEBUGPRINT("\t+ AksIM: done pin-muxing\r\n");
 
     /* ******************************************************************* */
-    /* McSPI: Sort out interrupts */
-
-    /* Register McSPIIsr interrupt handler */
-	IntRegister(SYS_INT_SPI0INT, aksimMcSPIIsr);
-
-	/* Set Interrupt Priority */
-	IntPrioritySet(SYS_INT_SPI0INT, 0, AINTC_HOSTINT_ROUTE_IRQ);
-
-    /* Enable system interrupt in AINTC */
-	IntSystemEnable(SYS_INT_SPI0INT);
-
-    DEBUGPRINT("\t+ AksIM: interrupts for McSPI registered and enabled\r\n");
-
-    /* ******************************************************************* */
-    /* McSPI: Set up McSPI */
-
-    /* Reset the McSPI instance */
-    McSPIReset(SOC_SPI_0_REGS);
-
-    /* Enable chip select pin */
-    McSPICSEnable(SOC_SPI_0_REGS);
-
-    /* Enable master mode of operation */
-    McSPIMasterModeEnable(SOC_SPI_0_REGS);
+    /* McSPI: Set up McSPI for this specific channel */
 
     /* Perform the necessary configuration for master mode */
     /* MCSPI_DATA_LINE_COMM_MODE_7 = D0 & D1 disabled for output, receive on D1 */
-    McSPIMasterModeConfig(SOC_SPI_0_REGS, MCSPI_SINGLE_CH,
+    McSPIMasterModeConfig(SOC_SPI_0_REGS, MCSPI_MULTI_CH,
                           MCSPI_RX_ONLY_MODE, MCSPI_DATA_LINE_COMM_MODE_7,
                           AKSIM_SPI_CHANNEL);
-
-    /* Set D1 to be an input at module level*/
-    HWREG(SOC_SPI_0_REGS + MCSPI_SYST) |= (1 << 9);
 
     /* Configure the McSPI bus clock depending on clock mode */
     /* MCSPI_CLK_MODE_1: AKSIM loads data on rising clk edge, read it on the falling
@@ -157,10 +136,6 @@ void aksimSetup(void)
 
     /* Set polarity of SPIEN (CS) to low */
     McSPICSPolarityConfig(SOC_SPI_0_REGS, MCSPI_CS_POL_LOW, AKSIM_SPI_CHANNEL);
-
-    /* Delay the clock start after CS goes low (by 8 clock cycles; 2us is needed = 6 cycles at 3MHz)*/
-    /* This isn't used since we force the CS anyway... */
-    /* McSPIInitDelayConfig(SOC_SPI_0_REGS, MCSPI_INITDLY_8); */
 
     /* Enable the receiver FIFO of McSPI peripheral */
     McSPIRxFIFOConfig(SOC_SPI_0_REGS, MCSPI_RX_FIFO_ENABLE, AKSIM_SPI_CHANNEL);
@@ -185,7 +160,8 @@ void aksimCaptureGet(void)
     McSPIIntEnable(SOC_SPI_0_REGS, MCSPI_INT_TX_EMPTY(AKSIM_SPI_CHANNEL) | MCSPI_INT_RX_FULL(AKSIM_SPI_CHANNEL) | MCSPI_INT_EOWKE);
 
     /* SPIEN (CS) line is forced to low state */
-    McSPICSAssert(SOC_SPI_0_REGS, AKSIM_SPI_CHANNEL);
+    GPIOPinWrite(CS1_REGS, CS1_PIN, GPIO_PIN_LOW);
+    /* McSPICSAssert(SOC_SPI_0_REGS, AKSIM_SPI_CHANNEL); */
 
     /* Wait for 2us = 48 cycles of the 24MHz clock */
     waitfor(48);
@@ -231,7 +207,8 @@ void aksimMcSPIIsr(void)
             waitfor(24);
 
             /* Force SPIEN (CS) line to the inactive state */
-            McSPICSDeAssert(SOC_SPI_0_REGS, AKSIM_SPI_CHANNEL);
+            GPIOPinWrite(CS1_REGS, CS1_PIN, GPIO_PIN_HIGH);
+            /*McSPICSDeAssert(SOC_SPI_0_REGS, AKSIM_SPI_CHANNEL); */
 
             /* Disable interrupts */
             McSPIIntDisable(SOC_SPI_0_REGS, MCSPI_INT_TX_EMPTY(AKSIM_SPI_CHANNEL) | MCSPI_INT_RX_FULL(AKSIM_SPI_CHANNEL) | MCSPI_INT_EOWKE);
