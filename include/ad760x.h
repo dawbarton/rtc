@@ -77,8 +77,8 @@ typedef enum {
 	AD760X_RANGE_LOW
 } ad760x_range;
 
-/* 
-Used for setting the oversampling rate 
+/*
+Used for setting the oversampling rate
 	no oversampling (max rate 200kHz, bandwidth 22kHz)
 	2x oversampling (max rate 100kHz, bandwidth 22kHz)
 	4x oversampling (max rate 50kHz, bandwidth 18.5kHz)
@@ -98,7 +98,7 @@ typedef enum {
 } ad760x_oversample;
 
 /* Samples from the AD760x */
-extern volatile int ad760xBuffer[AD760X_CHANNEL_COUNT];
+extern volatile int ad760xBuffer[2*AD760X_CHANNEL_COUNT];
 
 /* Flag to indicate data ready */
 extern volatile int ad760xBufferReady;

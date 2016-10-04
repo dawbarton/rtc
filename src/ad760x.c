@@ -69,7 +69,7 @@
 
 #define AD760X_SPI_CHANNEL 0
 #define MCSPI_IN_CLK 48000000
-#define MCSPI_OUT_FREQ 12000000
+#define MCSPI_OUT_FREQ 6000000
 
 #define OS0_REGS SOC_GPIO_2_REGS
 #define OS0_PIN 1
@@ -101,13 +101,15 @@
 #define SPI1_CS_REGS SOC_GPIO_3_REGS
 #define SPI1_CS0 GPIO_3_17
 #define SPI1_CS0_PIN 17
+#define SPI1_CS1 GPIO_3_19
+#define SPI1_CS1_PIN 19
 #define SPI1_D0 GPIO_3_15
 #define SPI1_D1 GPIO_3_16
 
 #define AD760X_SIGN_MASK   (1 << (AD760X_BIT_COUNT - 1))
 #define AD760X_SIGN_EXT    (0xFFFF << AD760X_BIT_COUNT)
 
-volatile int ad760xBuffer[AD760X_CHANNEL_COUNT];
+volatile int ad760xBuffer[2*AD760X_CHANNEL_COUNT];
 volatile int ad760xBufferReady = 0;
 void (*ad760xDataHandler)(void);
 
@@ -117,7 +119,7 @@ void (*ad760xDataHandler)(void);
 /* Wait for a certain number of counter ticks */
 static void waitfor(unsigned int);
 /* Get conversion data from the device */
-static void ad760xCaptureGet(void);
+static void ad760xCaptureGet(int);
 /* The McSPI interrupt handler */
 static void ad760xMcSPIIsr(void);
 /* The GPIO interrupt handler */
@@ -152,9 +154,12 @@ void ad760xSetup(void)
     GPIOPinMuxSetup(SPI1_D0,   PAD_FS_RXD_NA_PUPDD(3));
     GPIOPinMuxSetup(SPI1_D1,   PAD_FS_RXE_PU_PUPDE(3));
     GPIOPinMuxSetup(SPI1_CS0,  PAD_FS_RXD_NA_PUPDD(7)); /* Use as GPIO */
+    GPIOPinMuxSetup(SPI1_CS1,  PAD_FS_RXD_NA_PUPDD(7)); /* Use as GPIO */
 
     GPIODirModeSet(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_DIR_OUTPUT);
     GPIOPinWrite(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_PIN_HIGH);
+    GPIODirModeSet(SPI1_CS_REGS, SPI1_CS1_PIN, GPIO_DIR_OUTPUT);
+    GPIOPinWrite(SPI1_CS_REGS, SPI1_CS1_PIN, GPIO_PIN_HIGH);
 
     DEBUGPRINT("\t+ AD760x: done pin-muxing\r\n");
 
@@ -367,14 +372,21 @@ void ad760xCaptureStart(void)
 }
 
 /* ************************************************************************ */
-void ad760xCaptureGet(void)
+void ad760xCaptureGet(int channel)
 {
     /* Set the number of words to transfer */
     McSPIWordCountSet(SOC_SPI_1_REGS, AD760X_CHANNEL_COUNT);
 
     /* SPIEN (CS) line is forced to low state */
     McSPICSAssert(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
-    GPIOPinWrite(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_PIN_LOW);
+    if (channel == 0) {
+        ad760xBufferReady = 0;
+        GPIOPinWrite(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_PIN_LOW);
+    }
+    else {
+        ad760xBufferReady = 1;
+        GPIOPinWrite(SPI1_CS_REGS, SPI1_CS1_PIN, GPIO_PIN_LOW);
+    }
 }
 
 /* ************************************************************************ */
@@ -383,7 +395,6 @@ void ad760xMcSPIIsr(void)
     unsigned int intCode, i, j;
 
     intCode = McSPIIntStatusGet(SOC_SPI_1_REGS);
-    ad760xBufferReady = 0;
 
     while(intCode) {
 
@@ -405,15 +416,19 @@ void ad760xMcSPIIsr(void)
             /* Extract the data from the FIFO */
             for (i = 0; i < AD760X_CHANNEL_COUNT; i++) {
                 j = McSPIReceiveData(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL) & AD760X_BIT_MASK;
-                ad760xBuffer[i] = (j & AD760X_SIGN_MASK) ? (j | AD760X_SIGN_EXT) : j;
+                ad760xBuffer[ad760xBufferReady*AD760X_CHANNEL_COUNT + i] = (j & AD760X_SIGN_MASK) ? (j | AD760X_SIGN_EXT) : j;
             }
 
             /* Force SPIEN (CS) line to the inactive state */
-            GPIOPinWrite(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_PIN_HIGH);
             McSPICSDeAssert(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
-
-            /* Signal data ready */
-            ad760xBufferReady = 1;
+            if (ad760xBufferReady == 0) {
+                GPIOPinWrite(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_PIN_HIGH);
+                ad760xCaptureGet(1);
+            }
+            else {
+                GPIOPinWrite(SPI1_CS_REGS, SPI1_CS1_PIN, GPIO_PIN_HIGH);
+                ad760xBufferReady = 2;
+            }
 
         }
 
@@ -429,7 +444,7 @@ void ad760xMcSPIIsr(void)
     }
 
     /* Call the data handler if necessary */
-    if (ad760xBufferReady && (ad760xDataHandler != NULL))
+    if ((ad760xBufferReady == 2) && (ad760xDataHandler != NULL))
         ad760xDataHandler();
 
 }
@@ -447,7 +462,7 @@ void ad760xGPIOIsr(void)
         GPIOPinWrite(CONVST_REGS, CONVST_PIN, GPIO_PIN_LOW);
 
         /* Get the data */
-        ad760xCaptureGet();
+        ad760xCaptureGet(0);
 
     }
 }

@@ -54,7 +54,7 @@ static volatile unsigned int rtc_input_voltage_range;
 static volatile float rtc_input_voltage_scale;
 static volatile unsigned int rtc_last_time;
 volatile unsigned int rtc_user_finished;
-volatile float in_volt[AD760X_CHANNEL_COUNT];
+volatile float in_volt[2*AD760X_CHANNEL_COUNT];
 volatile float out_volt[4];
 
 /* ************************************************************************ */
@@ -89,6 +89,10 @@ void rtc_user_init_handler(void)
 	for (i = 0; i < AD760X_CHANNEL_COUNT; i++) {
 		input_name[1] = '0' + i;
 		rtc_data_add_par(input_name, &in_volt[i], RTC_TYPE_FLOAT, sizeof(float), rtc_data_trigger_read_only, NULL);
+	}
+	for (i = 0; i < AD760X_CHANNEL_COUNT; i++) {
+		input_name[1] = 'A' + i;
+		rtc_data_add_par(input_name, &in_volt[AD760X_CHANNEL_COUNT+i], RTC_TYPE_FLOAT, sizeof(float), rtc_data_trigger_read_only, NULL);
 	}
 	input_name[0] = 'O';
 	for (i = 0; i < 4; i++) {
@@ -125,7 +129,7 @@ void rtc_user_main_handler(void)
 	rtc_last_time = t1;
 
 	/* Calculate the actual voltages */
-	for (i = 0; i < AD760X_CHANNEL_COUNT; i++)
+	for (i = 0; i < 2*AD760X_CHANNEL_COUNT; i++)
 		in_volt[i] = ((float)ad760xBuffer[i])*rtc_input_voltage_scale;
 
 	/* Call the user code */
