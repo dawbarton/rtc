@@ -97,10 +97,10 @@
 #define BUSY_PIN_MUX GPIO_1_13
 #define BUSY_INT SYS_INT_GPIOINT1A
 
-#define CONTROL_CONF_SPI1_SCLK GPIO_3_14
-#define CONTROL_CONF_SPI1_CS0  GPIO_3_17
-#define CONTROL_CONF_SPI1_D0   GPIO_3_15
-#define CONTROL_CONF_SPI1_D1   GPIO_3_16
+#define SPI1_SCLK GPIO_3_14
+#define SPI1_CS0  GPIO_3_17
+#define SPI1_D0   GPIO_3_15
+#define SPI1_D1   GPIO_3_16
 
 #define AD760X_SIGN_MASK   (1 << (AD760X_BIT_COUNT - 1))
 #define AD760X_SIGN_EXT    (0xFFFF << AD760X_BIT_COUNT)
@@ -146,10 +146,10 @@ void ad760xSetup(void)
     DEBUGPRINT("\t+ AD760x: enabled clocks for SPI1\r\n");
 
     /* Perform Pin-Muxing for SPI1 Instance: SPI is mode 3 of these pins */
-    GPIOPinMuxSetup(CONTROL_CONF_SPI1_SCLK, PAD_FS_RXE_NA_PUPDD(3));
-    GPIOPinMuxSetup(CONTROL_CONF_SPI1_D0,   PAD_FS_RXD_NA_PUPDD(3));
-    GPIOPinMuxSetup(CONTROL_CONF_SPI1_D1,   PAD_FS_RXE_PU_PUPDE(3));
-    GPIOPinMuxSetup(CONTROL_CONF_SPI1_CS0,  PAD_FS_RXD_NA_PUPDD(3));
+    GPIOPinMuxSetup(SPI1_SCLK, PAD_FS_RXE_NA_PUPDD(3));
+    GPIOPinMuxSetup(SPI1_D0,   PAD_FS_RXD_NA_PUPDD(3));
+    GPIOPinMuxSetup(SPI1_D1,   PAD_FS_RXE_PU_PUPDE(3));
+    GPIOPinMuxSetup(SPI1_CS0,  PAD_FS_RXD_NA_PUPDD(3));
 
     DEBUGPRINT("\t+ AD760x: done pin-muxing\r\n");
 
@@ -291,6 +291,12 @@ void ad760xSetup(void)
     /* Enable the interrupt for the busy signal */
     GPIOPinIntEnable(BUSY_REGS, GPIO_INT_LINE_1, BUSY_PIN);
 
+    /* Enable the Tx/Rx and End-of-word-count interrupts of McSPI */
+    McSPIIntEnable(SOC_SPI_1_REGS, MCSPI_INT_TX_EMPTY(AD760X_SPI_CHANNEL) | MCSPI_INT_RX_FULL(AD760X_SPI_CHANNEL) | MCSPI_INT_EOWKE);
+
+    /* Enable the McSPI channel for communication */
+    McSPIChannelEnable(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
+
     DEBUGPRINT("\t+ AD760x: conversion complete interrupt enabled\r\n");
 }
 
@@ -361,14 +367,8 @@ void ad760xCaptureGet(void)
     /* Set the number of words to transfer */
     McSPIWordCountSet(SOC_SPI_1_REGS, AD760X_CHANNEL_COUNT);
 
-    /* Enable the Tx/Rx and End-of-word-count interrupts of McSPI */
-    McSPIIntEnable(SOC_SPI_1_REGS, MCSPI_INT_TX_EMPTY(AD760X_SPI_CHANNEL) | MCSPI_INT_RX_FULL(AD760X_SPI_CHANNEL) | MCSPI_INT_EOWKE);
-
     /* SPIEN (CS) line is forced to low state */
     McSPICSAssert(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
-
-    /* Enable the McSPI channel for communication */
-    McSPIChannelEnable(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
 }
 
 /* ************************************************************************ */
@@ -402,14 +402,8 @@ void ad760xMcSPIIsr(void)
                 ad760xBuffer[i] = (j & AD760X_SIGN_MASK) ? (j | AD760X_SIGN_EXT) : j;
             }
 
-            /* Disable the McSPI channel */
-            McSPIChannelDisable(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
-
             /* Force SPIEN (CS) line to the inactive state */
             McSPICSDeAssert(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
-
-            /* Disable interrupts */
-            McSPIIntDisable(SOC_SPI_1_REGS, MCSPI_INT_TX_EMPTY(AD760X_SPI_CHANNEL) | MCSPI_INT_RX_FULL(AD760X_SPI_CHANNEL) | MCSPI_INT_EOWKE);
 
             /* Signal data ready */
             ad760xBufferReady = 1;
