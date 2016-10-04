@@ -98,9 +98,11 @@
 #define BUSY_INT SYS_INT_GPIOINT1A
 
 #define SPI1_SCLK GPIO_3_14
-#define SPI1_CS0  GPIO_3_17
-#define SPI1_D0   GPIO_3_15
-#define SPI1_D1   GPIO_3_16
+#define SPI1_CS_REGS SOC_GPIO_3_REGS
+#define SPI1_CS0 GPIO_3_17
+#define SPI1_CS0_PIN 17
+#define SPI1_D0 GPIO_3_15
+#define SPI1_D1 GPIO_3_16
 
 #define AD760X_SIGN_MASK   (1 << (AD760X_BIT_COUNT - 1))
 #define AD760X_SIGN_EXT    (0xFFFF << AD760X_BIT_COUNT)
@@ -149,7 +151,10 @@ void ad760xSetup(void)
     GPIOPinMuxSetup(SPI1_SCLK, PAD_FS_RXE_NA_PUPDD(3));
     GPIOPinMuxSetup(SPI1_D0,   PAD_FS_RXD_NA_PUPDD(3));
     GPIOPinMuxSetup(SPI1_D1,   PAD_FS_RXE_PU_PUPDE(3));
-    GPIOPinMuxSetup(SPI1_CS0,  PAD_FS_RXD_NA_PUPDD(3));
+    GPIOPinMuxSetup(SPI1_CS0,  PAD_FS_RXD_NA_PUPDD(7)); /* Use as GPIO */
+
+    GPIODirModeSet(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_DIR_OUTPUT);
+    GPIOPinWrite(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_PIN_HIGH);
 
     DEBUGPRINT("\t+ AD760x: done pin-muxing\r\n");
 
@@ -369,6 +374,7 @@ void ad760xCaptureGet(void)
 
     /* SPIEN (CS) line is forced to low state */
     McSPICSAssert(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
+    GPIOPinWrite(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_PIN_LOW);
 }
 
 /* ************************************************************************ */
@@ -403,6 +409,7 @@ void ad760xMcSPIIsr(void)
             }
 
             /* Force SPIEN (CS) line to the inactive state */
+            GPIOPinWrite(SPI1_CS_REGS, SPI1_CS0_PIN, GPIO_PIN_HIGH);
             McSPICSDeAssert(SOC_SPI_1_REGS, AD760X_SPI_CHANNEL);
 
             /* Signal data ready */
