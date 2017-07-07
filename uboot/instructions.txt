@@ -20,6 +20,14 @@ uEnv.txt on it to contain the line
 
 uenvcmd=mmcinfo;fatload mmc 0 0x80000000 app.bin; go 0x80000000
 
+***NOTE*** On some recent versions of the Beaglebone Black the Angstrom flasher 
+doesn't appear to work. Instead, connect the Beaglebone Black to a computer via
+USB and, once it has started up, a USB drive should appear. You can then rename
+MLO, u-boot.img and uEnv.txt to be (something like) *-debian and copy over the 
+file MLO, u-boot.img and uEnv.txt from the Angstrom distribution. (A copy should
+be alongside this file.) ***BE CAREFUL***, copying accross the incorrect files 
+will brick the device!
+
 Reboot again and the Beaglebone will try to load the file called app.bin from
 the SD card - this is the code you generate here.
 
