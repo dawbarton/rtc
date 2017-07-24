@@ -1,0 +1,9 @@
+1) For the board:
+16 way right angle pcb header, MPN T821116A1R100CEU
+12 way right angle pcb header, MPN T821112A1R100CEU
+ 
+2) For the ribbon cable:
+Ribbon cable, 16 way, MPN 6618297000305
+16 way socket, 2.54mm, MPN T812116A100CEU
+12 way socket, 2.54mm, MPN T812112A100CEU
+ 
