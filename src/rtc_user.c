@@ -36,6 +36,7 @@
 #include "rtc_data.h"
 #include "ad760x.h"
 #include "ad5064.h"
+#include "orbis.h"
 #include "interrupt.h"
 
 #define OUTPUT_VOLTAGE 4.096f
@@ -95,6 +96,13 @@ void rtc_user_init_handler(void)
 		input_name[1] = '0' + i;
 		rtc_data_add_par(input_name, &out_volt[i], RTC_TYPE_FLOAT, sizeof(float), rtc_data_trigger_read_only, NULL);
 	}
+	rtc_data_add_par("orbis", &orbisBuffer, RTC_TYPE_CHAR, sizeof(orbisBuffer), rtc_data_trigger_read_only, NULL);
+	rtc_data_add_par("orbis_mt", &orbisMultiturn, RTC_TYPE_UINT32, sizeof(orbisMultiturn), rtc_data_trigger_read_only, NULL);
+	rtc_data_add_par("orbis_pos", &orbisPosition, RTC_TYPE_UINT32, sizeof(orbisPosition), rtc_data_trigger_read_only, NULL);
+	rtc_data_add_par("orbis_angle", &orbisAngle, RTC_TYPE_FLOAT, sizeof(orbisAngle), rtc_data_trigger_read_only, NULL);
+	rtc_data_add_par("orbis_status", &orbisStatus, RTC_TYPE_UINT32, sizeof(orbisStatus), rtc_data_trigger_read_only, NULL);
+	rtc_data_add_par("orbis_crc", &orbisCRC, RTC_TYPE_UINT32, sizeof(orbisCRC), rtc_data_trigger_read_only, NULL);
+
 	rtc_user_finished = 0;
 	rtc_user_init();
 }

@@ -34,11 +34,20 @@
 
 #define ORBIS_BIT_MASK 0xff
 
+#define ORBIS_RESOLUTION 0.0003834951969714103 /* 2*pi/2^14 */
+
 /* Samples from the AD760x */
 extern volatile unsigned char orbisBuffer[ORBIS_WORD_COUNT];
 
 /* Flag to indicate data ready */
 extern volatile int orbisBufferReady;
+
+/* Processed data */
+extern volatile unsigned int orbisMultiturn;
+extern volatile unsigned int orbisPosition;
+extern volatile float orbisAngle;
+extern volatile unsigned int orbisStatus;
+extern volatile unsigned int orbisCRC;
 
 /* Set up GPIOs, McSPI and delay timer needed for AD760X operation */
 void orbisSetup(void);

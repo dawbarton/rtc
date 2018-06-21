@@ -57,6 +57,13 @@
 volatile unsigned char orbisBuffer[ORBIS_WORD_COUNT];
 volatile int orbisBufferReady = 0;
 
+volatile unsigned int orbisMultiturn;
+volatile unsigned int orbisPosition;
+volatile float orbisAngle;
+volatile unsigned int orbisStatus;
+volatile unsigned int orbisCRC;
+
+
 /* ************************************************************************ */
 /* * Internal prototypes ************************************************** */
 /* ************************************************************************ */
@@ -139,6 +146,9 @@ void orbisCaptureStart(void)
     /* Manually set the CS */
     GPIOPinWrite(CS_REGS, CS_PIN, GPIO_PIN_LOW);
 
+    /* Wait for 8us */
+    waitfor(TIMER_1US*8);
+
     /* Start the transfer */
     McSPIChannelEnable(SOC_SPI_0_REGS, ORBIS_SPI_CHANNEL);
 }
@@ -183,6 +193,13 @@ void orbisMcSPIIsr(void)
 
             /* Signal data ready */
             orbisBufferReady = 1;
+
+            /* Extract data */
+            orbisMultiturn = (orbisBuffer[0] << 8) | orbisBuffer[1];
+            orbisPosition = (orbisBuffer[2] << 6) | (orbisBuffer[3] >> 2);
+            orbisStatus = orbisBuffer[3] & 3;
+            orbisCRC = orbisBuffer[4];
+            orbisAngle = (float)orbisPosition*ORBIS_RESOLUTION;
 
         }
 
