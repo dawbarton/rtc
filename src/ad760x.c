@@ -67,6 +67,8 @@
 #include "uartStdio.h"
 #include "consoleUtils.h"
 
+#include "orbis.h"
+
 #define AD760X_SPI_CHANNEL 0
 #define MCSPI_IN_CLK 48000000
 #define MCSPI_OUT_FREQ 12000000
@@ -364,6 +366,13 @@ void ad760xCaptureStart(void)
 /* ************************************************************************ */
 void ad760xCaptureGet(void)
 {
+    /* Reset the buffer statuses */
+    orbisBufferReady = 0;
+    ad760xBufferReady = 0;
+
+    /* Start capturing from the Orbis */
+    orbisCaptureStart();
+
     /* Set the number of words to transfer */
     McSPIWordCountSet(SOC_SPI_1_REGS, AD760X_CHANNEL_COUNT);
 
@@ -377,7 +386,6 @@ void ad760xMcSPIIsr(void)
     unsigned int intCode, i, j;
 
     intCode = McSPIIntStatusGet(SOC_SPI_1_REGS);
-    ad760xBufferReady = 0;
 
     while(intCode) {
 
@@ -421,9 +429,10 @@ void ad760xMcSPIIsr(void)
         intCode = McSPIIntStatusGet(SOC_SPI_1_REGS);
     }
 
-    /* Call the data handler if necessary */
-    if (ad760xBufferReady && (ad760xDataHandler != NULL))
+    if (ad760xBufferReady && orbisBufferReady && (ad760xDataHandler != NULL)) {
+        orbisBufferReady = 0;
         ad760xDataHandler();
+    }
 
 }
 

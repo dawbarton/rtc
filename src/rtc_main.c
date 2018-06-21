@@ -43,8 +43,9 @@
 #include "gpio_setup.h"
 #include "ad760x.h"
 #include "ad5064.h"
+#include "orbis.h"
 
-#include "consoleUtils.h"   
+#include "consoleUtils.h"
 
 #include "rtc_messaging.h"
 #include "rtc_data.h"
@@ -97,7 +98,7 @@ void initialise(void)
     /* ******************************************************************** */
     /* * UART ************************************************************* */
     /* ******************************************************************** */
-    
+
     /* Initialize console for communication with the Host Machine */
     ConsoleUtilsInit();
     ConsoleUtilsSetType(CONSOLE_UART);
@@ -173,19 +174,19 @@ void initialise(void)
     /* ******************************************************************** */
     /* * General purpose timer ******************************************** */
     /* ******************************************************************** */
-    
+
     DMTimer4ModuleClkConfig();
     DMTimerPreScalerClkDisable(SOC_DMTIMER_4_REGS);
     DMTimerCounterSet(SOC_DMTIMER_4_REGS, 0);
     DMTimerReloadSet(SOC_DMTIMER_4_REGS, 0);
     DMTimerModeConfigure(SOC_DMTIMER_4_REGS, DMTIMER_AUTORLD_NOCMP_ENABLE);
-    DMTimerEnable(SOC_DMTIMER_4_REGS);  
+    DMTimerEnable(SOC_DMTIMER_4_REGS);
     ConsoleUtilsPrintf("\t+ DMTimer4 done\r\n");
 
     /* ******************************************************************** */
     /* * AD760x *********************************************************** */
     /* ******************************************************************** */
-    
+
     ad760xSetup();
     ad760xSetupPWM(TIMER_PERIOD);
 
@@ -208,14 +209,21 @@ void initialise(void)
     /* ******************************************************************** */
     /* * AD5064 *********************************************************** */
     /* ******************************************************************** */
-    
+
     ad5064Setup();
     ConsoleUtilsPrintf("\t+ AD5064 done\r\n");
 
     /* ******************************************************************** */
+    /* * Orbis ************************************************************ */
+    /* ******************************************************************** */
+
+    orbisSetup();
+    ConsoleUtilsPrintf("\t+ Orbis done\r\n");
+
+    /* ******************************************************************** */
     /* * Done ************************************************************* */
     /* ******************************************************************** */
-    
+
     rtc_led(0, 1);
     ConsoleUtilsPrintf("\t+ all done!\r\n\r\n");
 }
