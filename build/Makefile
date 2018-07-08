@@ -40,7 +40,7 @@ $(APP_NAME).bin: $(SRC) $(INC)
 	$(CC) $(CFLAGS) -DFIRMWARE_VERSION="\"$(APP_NAME)_$(FIRMWARE_VERSION)\"" -DSAMPLE_FREQ=$(SAMPLE_FREQ) $(SRC)
 	@mkdir -p bin
 	@mv *.o* bin/
-	$(LD) $(LDFLAGS) $(LPATH) -o bin/$(APP_NAME).out -Map bin/$(APP_NAME).map bin/*.o* \
+	$(LD) $(LDFLAGS) $(LPATH) -o bin/$(APP_NAME).out -Map bin/$(APP_NAME).map bin/*.o \
 		$(STARTERWARE_LIB) -lc -lgcc $(STARTERWARE_LIB) $(RUNTIMELIB) $(EXTRA_LIBS) -T $(APP_ROOT)/build/loader.lds
 	$(BIN) $(BINFLAGS) bin/$(APP_NAME).out $(APP_NAME).bin 
 #@git diff --exit-code --quiet || (echo; echo "*** WARNING: uncommitted changes; firmware version might be wrong! ***")
