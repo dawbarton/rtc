@@ -36,7 +36,7 @@ INC=$(wildcard *.h) $(APP_ROOT)/include/*.h
 FIRMWARE_VERSION=$(shell git rev-parse HEAD)
 
 # Build this package
-$(APP_NAME).bin: $(SRC) $(INC)
+$(APP_NAME).bin: Makefile $(SRC) $(INC)
 	$(CC) $(CFLAGS) -DFIRMWARE_VERSION="\"$(APP_NAME)_$(FIRMWARE_VERSION)\"" -DSAMPLE_FREQ=$(SAMPLE_FREQ) $(SRC)
 	@mkdir -p bin
 	@mv *.o* bin/
