@@ -103,7 +103,7 @@
 #define SPI1_D1   GPIO_3_16
 
 #define AD760X_SIGN_MASK   (1 << (AD760X_BIT_COUNT - 1))
-#define AD760X_SIGN_EXT    (0xFFFF << AD760X_BIT_COUNT)
+#define AD760X_SIGN_EXT    (0xFFFFu << AD760X_BIT_COUNT)
 
 volatile int ad760xBuffer[AD760X_CHANNEL_COUNT];
 volatile int ad760xBufferReady = 0;
