@@ -95,6 +95,14 @@ void rtc_user_init_handler(void)
 		input_name[1] = '0' + i;
 		rtc_data_add_par(input_name, &out_volt[i], RTC_TYPE_FLOAT, sizeof(float), rtc_data_trigger_read_only, NULL);
 	}
+
+	/* Set all output channels to 0 V. This is done here, and not in ad5064.c
+	   because the output function has been defined here. */
+	rtc_set_output(0, 0.0f);
+	rtc_set_output(1, 0.0f);
+	rtc_set_output(2, 0.0f);
+	rtc_set_output(3, 0.0f);
+
 	rtc_user_finished = 0;
 	rtc_user_init();
 }
