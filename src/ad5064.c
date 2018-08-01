@@ -180,7 +180,7 @@ void ad5064Setup(void)
     GPIODirModeSet(CLR_REGS,    CLR_PIN,    GPIO_DIR_OUTPUT);
 
     /* Set default outputs */
-    GPIOPinWrite(LDAC_REGS,   LDAC_PIN,   GPIO_PIN_LOW); /* Syncronous update by default */
+    GPIOPinWrite(LDAC_REGS,   LDAC_PIN,   GPIO_PIN_LOW); /* Synchronous update by default */
     GPIOPinWrite(CLR_REGS,    CLR_PIN,    GPIO_PIN_HIGH);
 
     /* ******************************************************************* */
