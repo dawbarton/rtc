@@ -20,13 +20,19 @@ uEnv.txt on it to contain the line
 
 uenvcmd=mmcinfo;fatload mmc 0 0x80000000 app.bin; go 0x80000000
 
-***NOTE*** On some recent versions of the Beaglebone Black the Angstrom flasher 
+***NOTE*** On some recent versions of the Beaglebone Black the Angstrom flasher
 doesn't appear to work. Instead, connect the Beaglebone Black to a computer via
-USB and, once it has started up, a USB drive should appear. You can then rename
-MLO, u-boot.img and uEnv.txt to be (something like) *-debian and copy over the 
-file MLO, u-boot.img and uEnv.txt from the Angstrom distribution. (A copy should
-be alongside this file.) ***BE CAREFUL***, copying accross the incorrect files 
-will brick the device!
+USB and, once it has started up, SSH to the Beaglebone (192.168.7.2 is the
+default IP address) and log in with username debian, password temppwd. Run the
+command `sudo dd if=/dev/zero of=/dev/mmcblk1 bs=1024 count=1024` to erase the
+bootloader from the device. Now the Beaglebone Black will boot directly from the
+micro-SD card.
+
+The Beaglebone Black seems to be sensitive to the format of the micro-SD card
+and the easiest way to get it right is to download the Angstrom image
+<https://s3.amazonaws.com/angstrom/demo/beaglebone/Angstrom-Cloud9-IDE-GNOME-eglibc-ipk-v2012.12-beaglebone-2013.06.20.img.xz>
+onto the micro-SD card and edit the uEnv.txt file on the SD card to contain the
+line above.
 
 Reboot again and the Beaglebone will try to load the file called app.bin from
 the SD card - this is the code you generate here.
