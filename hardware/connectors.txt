@@ -6,4 +6,13 @@
 Ribbon cable, 16 way, MPN 6618297000305
 16 way socket, 2.54mm, MPN T812116A100CEU
 12 way socket, 2.54mm, MPN T812112A100CEU
- 
+
+3) Headers for the expansion board (the big ones)
+
+I’m glad you asked – the headers I have used are Adafruit 706 https://www.adafruit.com/product/706
+
+I’ve bought one set from The Pi Hut https://thepihut.com/products/adafruit-stacking-header-set-for-beagle-bone-capes-2x23 for £5 (plus postage) and another off eBay for £9.50 (incl) https://www.ebay.co.uk/itm/706-Adafruit-Industries-Beagle-Bone-Stacking-Header-Set/361909156907
+
+They are also available from Digi-Key https://www.digikey.co.uk/product-detail/en/adafruit-industries-llc/706/1528-1365-ND/5629413 for £3.80, but the caveat is £16 delivery charge. However, they do free delivery on orders over £33 so if you are buying other components, might as well buy a few sets of the headers all at once. This is probably the cheapest option.
+
+The headers are nothing special apart from the length of the pins (10.5 mm) and their configuration 2x23, which is pretty unusual. I had an idea of buying headers with more pins and cutting them to required size, but the filters in PCB headers section of RS Components website are not that good so I did not find the long pin versions.
