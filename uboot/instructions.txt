@@ -10,10 +10,11 @@ or more directly from
 <https://s3.amazonaws.com/angstrom/demo/beaglebone/BBB-eMMC-flasher-2013.09.04.img.xz>.
 
 Put this image on a suitable micro-SD card (see the Beagleboard getting started
-web pages) and place it in the Beaglebone Black. Hold down the button "S3 Power"
+web pages) and place it in the Beaglebone Black. Hold down the button "S2 Boot"
 as you power up the device (hold for 10 sec or so) so that the Beaglebone boots
-from the SD card rather than internal memory. Leave the Beaglebone for 30
-minutes to an hour for the Angstrom Distribution to be installed.
+from the SD card rather than internal memory. The button is located just above 
+the SD card slot, to the right. Leave the Beaglebone for 30 minutes to an hour 
+for the Angstrom Distribution to be installed.
 
 Once Angstrom has been installed, reboot the Beaglebone and then edit the
 uEnv.txt on it to contain the line
@@ -37,13 +38,19 @@ line above.
 Reboot again and the Beaglebone will try to load the file called app.bin from
 the SD card - this is the code you generate here.
 
+You can have multiple .bin files on the same SD card. The 'Bone will load the one
+referenced in the uEnv.txt file. The example uEnv line above loads app.bin, and
+this can be changed. 
+
 
 Connecting to the Beaglebone Black via serial cable
 ===================================================
 
 The Kermit (C-Kermit) program can be used to connect to the Beaglebone Black
-using the UART-USB connection (buy a suitable FTDI cable). The settings needed
-are
+using the UART-USB connection (buy a suitable FTDI cable, such as TTL-232R-3V3, 
+RS stock number 429-307). 
+
+The settings needed are
 
 set line /dev/ttyUSB0
 set speed 115200
@@ -58,4 +65,6 @@ The advantage of the Kermit program (over, say, screen) is that it can be used
 to send files to the board with the send command. Also, it makes use of the
 terminal paging (i.e., it doesn't just keep 24 lines of output!).
 
-There are other terminals that can be used with the same settings.
+There are other terminals that can be used with the same settings. On Windows, 
+ExtraPuTTY <http://www.extraputty.com/> is very good. Ymodem protocol works
+for uploading files into the 'Bone, making using SD cards unnecessary.
