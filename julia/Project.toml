@@ -1,0 +1,12 @@
+[deps]
+DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+
+[compat]
+DSP = "0.8"
+GLMakie = "0.13"
+LinearAlgebra = "1.10"
+PythonCall = "0.9"
+julia = "1.10"
